@@ -6,11 +6,136 @@ alwaysApply: true
 
 ## Prinsip Dasar
 
-**Gunakan shadcn_flutter sebagai widget utama** - Selalu prioritaskan widget shadcn_flutter sebelum menggunakan widget Flutter standar
+**Gunakan custom widget Allnimall terlebih dahulu** - Selalu prioritaskan widget custom Allnimall sebelum menggunakan widget shadcn_flutter standar
 **Gunakan AllnimallButton dan AllnimallIconButton** - Untuk button dan icon button, gunakan widget custom Allnimall yang memiliki animasi hover dan bounce
-**Gunakan toast** - Instead of snackbar bawaan, guanakan toast shadcn
+**Gunakan AllnimallTextInput dan AllnimallTextArea** - Untuk text input dan text area, gunakan widget custom Allnimall yang memiliki efek shrink animation saat focus
+**Gunakan AllnimallToast** - Instead of snackbar bawaan, gunakan custom widget AllnimallToast yang mudah digunakan
+**Gunakan Lucide Icons** - Selalu prioritaskan Lucide Icons bawaan shadcn_flutter sebelum menggunakan Flutter Icons
 **Konsistensi desain** - Gunakan komponen shadcn untuk memastikan konsistensi visual di seluruh aplikasi
 **Bahasa Indonesia** - Semua label, button dan text di aplikasi ini harus berbahasa Indonesia
+
+## Custom Widget Allnimall
+
+### Widget yang Tersedia
+
+```dart
+// Import custom widgets
+import 'package:allnimall_store/src/widgets/allnimall_button.dart';
+import 'package:allnimall_store/src/widgets/allnimall_icon_button.dart';
+import 'package:allnimall_store/src/widgets/allnimall_text_input.dart';
+import 'package:allnimall_store/src/widgets/allnimall_text_area.dart';
+import 'package:allnimall_store/src/widgets/allnimall_toast.dart';
+```
+
+### Prioritas Penggunaan
+
+```dart
+// ✅ BENAR - Gunakan custom widget Allnimall terlebih dahulu
+AllnimallButton.primary(
+  onPressed: () {},
+  child: const Text('Masuk'),
+)
+
+AllnimallTextInput(
+  placeholder: 'Enter your name',
+  onChanged: (value) => print(value),
+)
+
+AllnimallToast.success(
+  context: context,
+  title: 'Berhasil',
+  content: 'Data berhasil disimpan',
+)
+
+// ❌ SALAH - Jangan gunakan shadcn standar jika ada custom widget
+PrimaryButton(
+  onPressed: () {},
+  child: const Text('Masuk'),
+)
+
+TextField(
+  placeholder: Text('Enter your name'),
+)
+
+showToast(
+  context: context,
+  builder: (context, overlay) {
+    return SurfaceCard(
+      child: Basic(
+        title: const Text('Berhasil'),
+        content: const Text('Data berhasil disimpan'),
+      ),
+    );
+  },
+)
+```
+
+## Icon Guidelines
+
+### Penggunaan Lucide Icons
+
+**Selalu prioritaskan Lucide Icons bawaan shadcn_flutter sebelum menggunakan Flutter Icons**
+
+```dart
+// ✅ BENAR - Gunakan Lucide Icons
+Icon(LucideIcons.chefHat)
+Icon(LucideIcons.check)
+Icon(LucideIcons.x)
+Icon(LucideIcons.info)
+Icon(LucideIcons.messageCircleWarning)
+
+// ❌ SALAH - Jangan gunakan Flutter Icons jika ada Lucide Icons
+Icon(Icons.restaurant)
+Icon(Icons.check)
+Icon(Icons.close)
+Icon(Icons.info)
+Icon(Icons.warning)
+```
+
+### Contoh Penggunaan Lucide Icons
+
+```dart
+// Success icon
+Icon(LucideIcons.check, color: Colors.green)
+
+// Error icon
+Icon(LucideIcons.x, color: Colors.red)
+
+// Warning icon
+Icon(LucideIcons.messageCircleWarning, color: Colors.orange)
+
+// Info icon
+Icon(LucideIcons.info, color: Colors.blue)
+
+// Search icon
+Icon(LucideIcons.search)
+
+// Menu icon
+Icon(LucideIcons.menu)
+
+// Settings icon
+Icon(LucideIcons.settings)
+
+// User icon
+Icon(LucideIcons.user)
+
+// Home icon
+Icon(LucideIcons.home)
+
+// Shopping cart icon
+Icon(LucideIcons.shoppingCart)
+```
+
+### Jika Icon Tidak Tersedia
+
+Jika icon yang dibutuhkan tidak tersedia di Lucide Icons, gunakan Flutter Icons sebagai alternatif:
+
+```dart
+// Jika Lucide Icons tidak memiliki icon yang dibutuhkan
+Icon(Icons.specificIcon)
+```
+
+**Catatan**: Jika Anda tidak tahu nama icon Lucide yang tersedia, beri tahu saya dan saya akan membantu mencari icon yang sesuai.
 
 ## Setup & Konfigurasi
 
@@ -111,7 +236,7 @@ Row(
 
 ### Uniform Height Guidelines
 
-```dart
+````dart
 // Text Field Height (44px - standar touch target yang nyaman)
 TextField(
   placeholder: Text('Username'),
@@ -159,7 +284,48 @@ AllnimallIconButton.secondary(
   onPressed: () {},
   icon: const Icon(Icons.edit),
 )
-```
+
+### AllnimallToast - Custom Toast Widget
+
+**Gunakan AllnimallToast untuk menampilkan feedback yang mudah dan konsisten**
+
+```dart
+// Success Toast
+AllnimallToast.success(
+  context: context,
+  title: 'Berhasil',
+  content: 'Data berhasil disimpan',
+);
+
+// Error Toast
+AllnimallToast.error(
+  context: context,
+  title: 'Error',
+  content: 'Terjadi kesalahan',
+);
+
+// Warning Toast
+AllnimallToast.warning(
+  context: context,
+  title: 'Peringatan',
+  content: 'Data tidak lengkap',
+);
+
+// Info Toast
+AllnimallToast.info(
+  context: context,
+  title: 'Informasi',
+  content: 'Proses sedang berjalan',
+);
+
+// Custom Toast dengan lokasi berbeda
+AllnimallToast.success(
+  context: context,
+  title: 'Berhasil',
+  content: 'Data berhasil disimpan',
+  location: ToastLocation.bottomCenter,
+);
+````
 
 ### Separator
 
@@ -5905,15 +6071,22 @@ Row(
 
 ## Daftar Widget Shadcn yang Tersedia
 
+### 📁 Custom Widget Allnimall (PRIORITAS UTAMA)
+
+- AllnimallButton - Custom button dengan animasi hover dan bounce
+- AllnimallIconButton - Custom icon button dengan animasi hover dan bounce
+- AllnimallTextInput - Custom text input dengan efek shrink animation
+- AllnimallTextArea - Custom text area dengan efek shrink animation
+
 ### 📁 Control
 
-- Button (button.md)
-- IconButton (button.md)
+- Button (button.md) - **Gunakan AllnimallButton sebagai gantinya**
+- IconButton (button.md) - **Gunakan AllnimallIconButton sebagai gantinya**
 
 ### 📁 Form
 
-- TextField (text-input.md)
-- TextArea (text-area.md)
+- TextField (text-input.md) - **Gunakan AllnimallTextInput sebagai gantinya**
+- TextArea (text-area.md) - **Gunakan AllnimallTextArea sebagai gantinya**
 - AutoComplete (auto-complete.md)
 - Checkbox (checkbox.md)
 - ChipInput (chip-input.md)

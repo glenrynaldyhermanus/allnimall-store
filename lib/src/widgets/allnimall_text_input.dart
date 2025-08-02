@@ -1,0 +1,261 @@
+import 'package:shadcn_flutter/shadcn_flutter.dart';
+
+/// Custom Text Input Widget dengan efek shrink animation saat focus
+///
+/// Widget ini memberikan feedback visual yang subtle saat user focus pada text field.
+/// Menggunakan animasi shrink (scale 0.98) dengan duration 200ms dan curve easeInOut.
+///
+/// ## Fitur:
+/// - ✅ Shrink animation saat focus
+/// - ✅ Support semua fitur TextField shadcn_flutter
+/// - ✅ Form validation integration
+/// - ✅ Customizable styling
+/// - ✅ Focus management
+///
+/// ## Penggunaan:
+///
+/// ```dart
+/// // Basic usage
+/// AllnimallTextInput(
+///   placeholder: 'Enter your name',
+///   onChanged: (value) => print(value),
+/// )
+///
+/// // With form validation
+/// AllnimallFormField(
+///   fieldKey: const TextFieldKey('username'),
+///   label: 'Username',
+///   placeholder: 'Enter username',
+///   validator: (value) {
+///     if (value == null || value.isEmpty) {
+///       return 'Username is required';
+///     }
+///     return null;
+///   },
+/// )
+///
+/// // With password visibility toggle
+/// AllnimallFormField(
+///   fieldKey: const TextFieldKey('password'),
+///   label: 'Password',
+///   placeholder: 'Enter password',
+///   obscureText: !_isPasswordVisible,
+///   features: [
+///     InputFeature.trailing(
+///       IconButton(
+///         onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+///         icon: Icon(_isPasswordVisible ? Icons.visibility_off : Icons.visibility),
+///       ),
+///     ),
+///   ],
+/// )
+/// ```
+class AllnimallTextInput extends StatefulWidget {
+  final String? placeholder;
+  final String? label;
+  final bool obscureText;
+  final List<InputFeature>? features;
+  final TextFieldKey? fieldKey;
+  final FormValidationMode? showErrors;
+  final String? Function(String?)? validator;
+  final void Function(String?)? onChanged;
+  final void Function(bool)? onFocusChange;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final double? width;
+  final double? height;
+  final EdgeInsets? padding;
+  final BorderRadius? borderRadius;
+
+  const AllnimallTextInput({
+    super.key,
+    this.placeholder,
+    this.label,
+    this.obscureText = false,
+    this.features,
+    this.fieldKey,
+    this.showErrors,
+    this.validator,
+    this.onChanged,
+    this.onFocusChange,
+    this.controller,
+    this.focusNode,
+    this.width,
+    this.height = 44,
+    this.padding,
+    this.borderRadius,
+  });
+
+  @override
+  State<AllnimallTextInput> createState() => _AllnimallTextInputState();
+}
+
+class _AllnimallTextInputState extends State<AllnimallTextInput>
+    with TickerProviderStateMixin {
+  late AnimationController _bounceController;
+  late Animation<double> _bounceAnimation;
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize focus node
+    _focusNode = widget.focusNode ?? FocusNode();
+
+    // Initialize animation controller
+    _bounceController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+
+    // Setup bounce animation
+    _bounceAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.98,
+    ).animate(CurvedAnimation(
+      parent: _bounceController,
+      curve: Curves.easeInOut,
+    ));
+
+    // Add focus listener
+    _focusNode.addListener(() {
+      _onFocusChange(_focusNode.hasFocus);
+    });
+  }
+
+  void _onFocusChange(bool focused) {
+    if (focused) {
+      _bounceController.forward().then((_) {
+        _bounceController.reverse();
+      });
+    }
+
+    // Call parent onFocusChange if provided
+    widget.onFocusChange?.call(focused);
+  }
+
+  @override
+  void dispose() {
+    if (widget.focusNode == null) {
+      _focusNode.dispose();
+    }
+    _bounceController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _bounceController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _bounceAnimation.value,
+          child: Container(
+            width: widget.width,
+            height: widget.height,
+            padding: widget.padding,
+            child: TextField(
+              key: widget.fieldKey,
+              placeholder:
+                  widget.placeholder != null ? Text(widget.placeholder!) : null,
+              obscureText: widget.obscureText,
+              features: widget.features ?? [],
+              onChanged: widget.onChanged,
+              controller: widget.controller,
+              focusNode: _focusNode,
+            ).constrained(
+              height: widget.height ?? 44,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// FormField wrapper untuk AllnimallTextInput
+///
+/// Widget ini menggabungkan AllnimallTextInput dengan FormField untuk
+/// integrasi yang mudah dengan form validation.
+///
+/// ## Penggunaan:
+///
+/// ```dart
+/// Form(
+///   onSubmit: (context, values) {
+///     // Handle form submission
+///   },
+///   child: Column(
+///     children: [
+///       AllnimallFormField(
+///         fieldKey: const TextFieldKey('email'),
+///         label: 'Email',
+///         placeholder: 'Enter your email',
+///         validator: (value) {
+///           if (value == null || value.isEmpty) {
+///             return 'Email is required';
+///           }
+///           return null;
+///         },
+///       ),
+///     ],
+///   ),
+/// )
+/// ```
+class AllnimallFormField extends StatelessWidget {
+  final TextFieldKey fieldKey;
+  final String? label;
+  final String? placeholder;
+  final bool obscureText;
+  final List<InputFeature>? features;
+  final Set<FormValidationMode>? showErrors;
+  final Validator<String>? validator;
+  final void Function(String?)? onChanged;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final double? width;
+  final double? height;
+  final EdgeInsets? padding;
+  final BorderRadius? borderRadius;
+
+  const AllnimallFormField({
+    super.key,
+    required this.fieldKey,
+    this.label,
+    this.placeholder,
+    this.obscureText = false,
+    this.features,
+    this.showErrors,
+    this.validator,
+    this.onChanged,
+    this.controller,
+    this.focusNode,
+    this.width,
+    this.height = 44,
+    this.padding,
+    this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FormField(
+      key: fieldKey,
+      label: label != null ? Text(label!) : const Text(''),
+      showErrors: showErrors,
+      validator: validator,
+      child: AllnimallTextInput(
+        placeholder: placeholder,
+        obscureText: obscureText,
+        features: features,
+        onChanged: onChanged,
+        controller: controller,
+        focusNode: focusNode,
+        width: width,
+        height: height,
+        padding: padding,
+        borderRadius: borderRadius,
+      ),
+    );
+  }
+}

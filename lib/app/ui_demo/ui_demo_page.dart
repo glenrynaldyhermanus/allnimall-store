@@ -21,14 +21,16 @@ class UiDemoPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Allnimall Custom Widgets').h1(),
-            const Text('Koleksi widget custom dengan animasi hover dan bounce').muted(),
+            const Text('Koleksi widget custom dengan animasi hover dan bounce')
+                .muted(),
             const Gap(48),
-            
+
             // AllnimallButton Section
             const Text('AllnimallButton').h2(),
-            const Text('Custom button dengan efek hover shadow dan bounce').muted(),
+            const Text('Custom button dengan efek hover shadow dan bounce')
+                .muted(),
             const Gap(24),
-            
+
             // PRIMARY
             const Text('PRIMARY').h3(),
             AllnimallButton.primary(
@@ -36,7 +38,7 @@ class UiDemoPage extends StatelessWidget {
               child: const Text('Primary'),
             ),
             const Gap(16),
-            
+
             // SECONDARY
             const Text('SECONDARY').h3(),
             AllnimallButton.secondary(
@@ -44,7 +46,7 @@ class UiDemoPage extends StatelessWidget {
               child: const Text('Secondary'),
             ),
             const Gap(16),
-            
+
             // OUTLINE
             const Text('OUTLINE').h3(),
             AllnimallButton.outline(
@@ -52,7 +54,7 @@ class UiDemoPage extends StatelessWidget {
               child: const Text('Outlined'),
             ),
             const Gap(16),
-            
+
             // GHOST
             const Text('GHOST').h3(),
             AllnimallButton.ghost(
@@ -60,7 +62,7 @@ class UiDemoPage extends StatelessWidget {
               child: const Text('Ghost'),
             ),
             const Gap(16),
-            
+
             // DESTRUCTIVE
             const Text('DESTRUCTIVE').h3(),
             AllnimallButton.destructive(
@@ -68,41 +70,41 @@ class UiDemoPage extends StatelessWidget {
               child: const Text('Destructive'),
             ),
             const Gap(16),
-            
+
             // LOADING STATE
             const Text('LOADING STATE').h3(),
             AllnimallButton.primary(
               onPressed: () {},
-              child: const Text('Loading...'),
               isLoading: true,
+              child: const Text('Loading...'),
             ),
             const Gap(16),
-            
+
             // CUSTOM SIZES
             const Text('CUSTOM SIZES').h3(),
             Row(
               children: [
                 AllnimallButton.primary(
                   onPressed: () {},
-                  child: const Text('Small'),
                   height: 32,
+                  child: const Text('Small'),
                 ),
                 const Gap(8),
                 AllnimallButton.primary(
                   onPressed: () {},
-                  child: const Text('Normal'),
                   height: 48,
+                  child: const Text('Normal'),
                 ),
                 const Gap(8),
                 AllnimallButton.primary(
                   onPressed: () {},
-                  child: const Text('Large'),
                   height: 56,
+                  child: const Text('Large'),
                 ),
               ],
             ),
             const Gap(16),
-            
+
             // WITH ICONS
             const Text('WITH ICONS').h3(),
             AllnimallButton.primary(
@@ -117,12 +119,13 @@ class UiDemoPage extends StatelessWidget {
               ),
             ),
             const Gap(48),
-            
+
             // AllnimallIconButton Section
             const Text('AllnimallIconButton').h2(),
-            const Text('Custom icon button dengan efek hover shadow dan bounce').muted(),
+            const Text('Custom icon button dengan efek hover shadow dan bounce')
+                .muted(),
             const Gap(24),
-            
+
             // PRIMARY ICONS
             const Text('PRIMARY').h3(),
             Row(
@@ -150,7 +153,7 @@ class UiDemoPage extends StatelessWidget {
               ],
             ),
             const Gap(16),
-            
+
             // SECONDARY ICONS
             const Text('SECONDARY').h3(),
             Row(
@@ -178,7 +181,7 @@ class UiDemoPage extends StatelessWidget {
               ],
             ),
             const Gap(16),
-            
+
             // OUTLINE ICONS
             const Text('OUTLINE').h3(),
             Row(
@@ -206,7 +209,7 @@ class UiDemoPage extends StatelessWidget {
               ],
             ),
             const Gap(16),
-            
+
             // GHOST ICONS
             const Text('GHOST').h3(),
             Row(
@@ -234,7 +237,7 @@ class UiDemoPage extends StatelessWidget {
               ],
             ),
             const Gap(16),
-            
+
             // DESTRUCTIVE ICONS
             const Text('DESTRUCTIVE').h3(),
             Row(
@@ -262,7 +265,7 @@ class UiDemoPage extends StatelessWidget {
               ],
             ),
             const Gap(16),
-            
+
             // CUSTOM SIZES ICONS
             const Text('CUSTOM SIZES').h3(),
             Row(
@@ -293,7 +296,7 @@ class UiDemoPage extends StatelessWidget {
               ],
             ),
             const Gap(16),
-            
+
             // CUSTOM BORDER RADIUS ICONS
             const Text('CUSTOM BORDER RADIUS').h3(),
             Row(
@@ -324,12 +327,12 @@ class UiDemoPage extends StatelessWidget {
               ],
             ),
             const Gap(48),
-            
+
             // FEATURES SECTION
             const Text('Features').h2(),
             const Text('Semua widget memiliki fitur animasi yang sama').muted(),
             const Gap(24),
-            
+
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -338,10 +341,12 @@ class UiDemoPage extends StatelessWidget {
                   children: [
                     const Text('Animasi yang Tersedia').h3(),
                     const Gap(16),
-                    const Text('• Hover Shadow: Shadow muncul/hilang dengan animasi opacity'),
+                    const Text(
+                        '• Hover Shadow: Shadow muncul/hilang dengan animasi opacity'),
                     const Text('• Button Lift: Button naik 2px saat hover'),
                     const Text('• Bounce Effect: Animasi scale saat diklik'),
-                    const Text('• Loading State: CircularProgressIndicator saat loading'),
+                    const Text(
+                        '• Loading State: CircularProgressIndicator saat loading'),
                     const Text('• Customizable: Size, padding, borderRadius'),
                     const Gap(16),
                     const Text('Durasi Animasi').h4(),
@@ -357,4 +362,4 @@ class UiDemoPage extends StatelessWidget {
       ),
     );
   }
-} 
+}
