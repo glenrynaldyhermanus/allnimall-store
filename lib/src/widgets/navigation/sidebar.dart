@@ -98,6 +98,7 @@ class _SidebarState extends State<Sidebar> {
             },
             child: const Icon(LucideIcons.menu),
           ),
+          const NavigationGap(8),
           const NavigationDivider(),
 
           // POS - Point of Sale
