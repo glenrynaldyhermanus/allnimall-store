@@ -1,6 +1,40 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
-class AllnimallSelect<T> extends StatelessWidget {
+/// Custom Select Widget dengan efek bounce animation saat focus
+///
+/// Widget ini memberikan feedback visual yang subtle saat user focus pada select field.
+/// Menggunakan animasi bounce (scale 0.98) dengan duration 100ms dan curve easeInOut.
+///
+/// ## Fitur:
+/// - ✅ Bounce animation saat focus
+/// - ✅ Support semua fitur Select shadcn_flutter
+/// - ✅ Search functionality
+/// - ✅ Customizable styling
+/// - ✅ Focus management
+///
+/// ## Penggunaan:
+///
+/// ```dart
+/// // Basic usage
+/// AllnimallSelect<String>(
+///   value: selectedValue,
+///   items: ['Apple', 'Banana', 'Cherry'],
+///   itemBuilder: (context, item) => Text(item),
+///   onChanged: (value) => setState(() => selectedValue = value),
+///   placeholder: Text('Select a fruit'),
+/// )
+///
+/// // With search
+/// AllnimallSelect<String>(
+///   value: selectedValue,
+///   items: ['Apple', 'Banana', 'Cherry'],
+///   itemBuilder: (context, item) => Text(item),
+///   onChanged: (value) => setState(() => selectedValue = value),
+///   placeholder: Text('Select a fruit'),
+///   searchPlaceholder: 'Search fruits...',
+/// )
+/// ```
+class AllnimallSelect<T> extends StatefulWidget {
   final T? value;
   final void Function(T?)? onChanged;
   final Widget? placeholder;
@@ -23,40 +57,108 @@ class AllnimallSelect<T> extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    Widget buildItem(BuildContext context, T item) {
-      return itemBuilder(context, item);
+  State<AllnimallSelect<T>> createState() => _AllnimallSelectState<T>();
+}
+
+class _AllnimallSelectState<T> extends State<AllnimallSelect<T>>
+    with TickerProviderStateMixin {
+  late AnimationController _bounceController;
+  late Animation<double> _bounceAnimation;
+  T? _previousValue;
+
+  @override
+  void initState() {
+    super.initState();
+    _previousValue = widget.value;
+
+    // Initialize animation controller
+    _bounceController = AnimationController(
+      duration: const Duration(milliseconds: 100),
+      vsync: this,
+    );
+
+    // Setup bounce animation
+    _bounceAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.98,
+    ).animate(CurvedAnimation(
+      parent: _bounceController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  void _triggerBounceAnimation() {
+    if (widget.enabled) {
+      _bounceController.forward().then((_) {
+        _bounceController.reverse();
+      });
+    }
+  }
+
+  void _handleChanged(T? value) {
+    // Trigger animation when value changes (indicating user interaction)
+    if (value != _previousValue) {
+      _triggerBounceAnimation();
+      _previousValue = value;
     }
 
-    return Select<T>(
-      value: value,
-      onChanged: enabled ? onChanged : null,
-      placeholder: placeholder,
-      constraints: constraints,
-      itemBuilder: (context, item) => buildItem(context, item),
-      popup: SelectPopup.builder(
-        searchPlaceholder:
-            searchPlaceholder != null ? Text(searchPlaceholder!) : null,
-        builder: (context, searchQuery) {
-          final filteredItems = searchQuery == null
-              ? items
-              : items.where((item) {
-                  final itemText =
-                      buildItem(context, item).toString().toLowerCase();
-                  return itemText.contains(searchQuery.toLowerCase());
-                }).toList();
+    // Call original onChanged
+    widget.onChanged?.call(value);
+  }
 
-          return SelectItemList(
-            children: [
-              for (final item in filteredItems)
-                SelectItemButton(
-                  value: item,
-                  child: buildItem(context, item),
-                ),
-            ],
-          );
-        },
-      ),
+  @override
+  void dispose() {
+    _bounceController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget buildItem(BuildContext context, T item) {
+      return widget.itemBuilder(context, item);
+    }
+
+    return AnimatedBuilder(
+      animation: _bounceController,
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _bounceAnimation.value,
+          child: Listener(
+            onPointerDown: (_) => _triggerBounceAnimation(),
+            child: Select<T>(
+              value: widget.value,
+              onChanged: widget.enabled ? _handleChanged : null,
+              placeholder: widget.placeholder,
+              constraints: widget.constraints,
+              itemBuilder: (context, item) => buildItem(context, item),
+              popup: SelectPopup.builder(
+                searchPlaceholder: widget.searchPlaceholder != null
+                    ? Text(widget.searchPlaceholder!)
+                    : null,
+                builder: (context, searchQuery) {
+                  final filteredItems = searchQuery == null
+                      ? widget.items
+                      : widget.items.where((item) {
+                          final itemText =
+                              buildItem(context, item).toString().toLowerCase();
+                          return itemText.contains(searchQuery.toLowerCase());
+                        }).toList();
+
+                  return SelectItemList(
+                    children: [
+                      for (final item in filteredItems)
+                        SelectItemButton(
+                          value: item,
+                          child: buildItem(context, item),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
