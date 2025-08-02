@@ -88,36 +88,24 @@ class Product {
         price: (json['price'] ?? 0).toDouble(),
         stock: json['stock'] ?? 0,
         minStock: json['min_stock'] ?? 0,
-        maxStock: json['max_stock'],
-        unit: json['unit'] ?? 'pcs',
+        unit: json['unit'] ?? '',
         weightGrams: json['weight_grams'] ?? 0,
+        description: json['description'] ?? '',
+        categoryName: categoryName,
+        storeId: json['store_id'] ?? '',
+        isActive: json['is_active'] ?? true,
         discountType: json['discount_type'] ?? 1,
         discountValue: (json['discount_value'] ?? 0).toDouble(),
-        description: json['description'],
-        ingredients: json['ingredients'],
-        usageInstructions: json['usage_instructions'],
-        ageRecommendation: json['age_recommendation'],
-        petSizeRecommendation: json['pet_size_recommendation'],
-        imageUrl: json['picture_url'],
-        isActive: json['is_active'] ?? true,
-        isPrescriptionRequired: json['is_prescription_required'] ?? false,
-        shelfLifeDays: json['shelf_life_days'],
-        storageInstructions: json['storage_instructions'],
-        categoryId: json['category_id'],
-        storeId: json['store_id'] ?? '',
-        expiredDate: json['expired_date'] != null
-            ? DateTime.parse(json['expired_date'])
-            : null,
-        createdAt: DateTime.parse(
-            json['created_at'] ?? DateTime.now().toIso8601String()),
+        createdAt: json['created_at'] != null
+            ? DateTime.parse(json['created_at'])
+            : DateTime.now(),
         updatedAt: json['updated_at'] != null
             ? DateTime.parse(json['updated_at'])
             : null,
-        categoryName: categoryName,
       );
     } catch (e) {
       debugPrint('❌ Debug - Error in Product.fromJson: $e');
-      debugPrint('🔍 Debug - Problematic JSON: $json');
+      debugPrint('❌ Debug - JSON data: $json');
       rethrow;
     }
   }

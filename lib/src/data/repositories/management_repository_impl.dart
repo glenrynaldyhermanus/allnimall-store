@@ -24,32 +24,36 @@ class ManagementRepositoryImpl implements ManagementRepository {
       }
 
       debugPrint('🔄 Debug - Executing Supabase query');
+      // Remove the categories join since it doesn't exist
       final response = await _supabaseClient
           .from('products')
-          .select('*, categories(name)')
+          .select('*')
           .eq('store_id', storeId)
+          .eq('is_active', true)
           .order('created_at', ascending: false);
 
       debugPrint('✅ Debug - Raw response: $response');
       debugPrint('🔍 Debug - Response type: ${response.runtimeType}');
       debugPrint('🔍 Debug - Response length: ${response.length}');
 
-      final products = (response as List).map((json) {
-        debugPrint('🔍 Debug - Processing product JSON: $json');
+      final List<Product> products = [];
+      for (final item in response) {
         try {
-          return Product.fromJson(json);
+          debugPrint('🔍 Debug - Processing item: $item');
+          final product = Product.fromJson(item);
+          products.add(product);
+          debugPrint('✅ Debug - Added product: ${product.name}');
         } catch (e) {
-          debugPrint('❌ Debug - Error parsing product: $e');
-          debugPrint('🔍 Debug - Problematic JSON: $json');
-          rethrow;
+          debugPrint('❌ Debug - Failed to parse product: $e');
+          debugPrint('❌ Debug - Item data: $item');
         }
-      }).toList();
+      }
 
       debugPrint('✅ Debug - Successfully parsed ${products.length} products');
       return products;
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('❌ Debug - Error in getAllProducts: $e');
-      debugPrint('🔍 Debug - Error stack trace: ${StackTrace.current}');
+      debugPrint('🔍 Debug - Error stack trace: $stackTrace');
       throw Exception('Failed to fetch products: $e');
     }
   }

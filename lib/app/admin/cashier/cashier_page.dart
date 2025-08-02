@@ -10,11 +10,13 @@ import 'package:allnimall_store/src/data/repositories/management_repository_impl
 import 'package:allnimall_store/src/core/services/supabase_service.dart';
 import 'package:allnimall_store/src/core/services/business_store_service.dart';
 import 'package:allnimall_store/src/widgets/ui/form/allnimall_icon_button.dart';
-import 'package:allnimall_store/src/widgets/ui/feedback/ProductLoading.dart';
-import 'package:allnimall_store/src/widgets/ui/feedback/CartLoading.dart';
+import 'package:allnimall_store/src/widgets/ui/feedback/product_loading.dart';
+import 'package:allnimall_store/src/widgets/ui/feedback/cart_loading.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:allnimall_store/src/providers/auth_provider.dart';
 import 'package:allnimall_store/src/data/objects/user.dart';
+import 'package:allnimall_store/src/widgets/ui/form/allnimall_text_input.dart';
+import 'package:allnimall_store/src/widgets/ui/form/allnimall_select.dart';
 
 class CashierPage extends ConsumerStatefulWidget {
   const CashierPage({super.key});
@@ -32,7 +34,13 @@ class _CashierPageState extends ConsumerState<CashierPage> {
 
   // Products State
   List<Product> products = [];
+  List<Product> filteredProducts = [];
   bool isLoadingProducts = true;
+
+  // Search and Filter State
+  final TextEditingController _searchController = TextEditingController();
+  String? selectedCategory;
+  List<String> categories = [];
 
   // Cart State
   List<CartItem> cartItems = [];
@@ -41,11 +49,66 @@ class _CashierPageState extends ConsumerState<CashierPage> {
   // Loading State
   bool isLoading = true;
 
+  @override
+  void initState() {
+    super.initState();
+
+    // Load header data
+    _loadHeaderData().catchError((e) {
+      debugPrint('Error loading header data: $e');
+    });
+
+    // Load products data with delay to avoid conflicts
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _loadProductsData().catchError((e) {
+          debugPrint('Error loading products data: $e');
+        });
+      }
+    });
+
+    // Add search listener
+    _searchController.addListener(_filterProducts);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    debugPrint('🔄 Debug - dispose called');
+    super.dispose();
+  }
+
+  void _filterProducts() {
+    final searchQuery = _searchController.text.toLowerCase();
+
+    setState(() {
+      filteredProducts = products.where((product) {
+        final matchesSearch =
+            product.name.toLowerCase().contains(searchQuery) ||
+                (product.code?.toLowerCase().contains(searchQuery) ?? false) ||
+                (product.barcode?.toLowerCase().contains(searchQuery) ?? false);
+
+        final matchesCategory = selectedCategory == null ||
+            product.categoryName == selectedCategory;
+
+        return matchesSearch && matchesCategory;
+      }).toList();
+    });
+  }
+
+  void _onCategoryChanged(String? category) {
+    setState(() {
+      selectedCategory = category;
+    });
+    _filterProducts();
+  }
+
   // Method to get user data from auth provider
   Future<Map<String, dynamic>?> _getUserDataFromAuthProvider() async {
     try {
-      final authNotifier = ref.read(authProvider.notifier);
-      final userData = await authNotifier.getStoredUserData();
+      final AuthNotifier authNotifier = ref.read(authProvider.notifier);
+      final Map<String, dynamic>? userData =
+          await authNotifier.getStoredUserData();
       debugPrint('🔍 Debug - User data from auth provider: $userData');
       return userData;
     } catch (e) {
@@ -57,39 +120,19 @@ class _CashierPageState extends ConsumerState<CashierPage> {
   // Method to get current user object
   Future<AppUser?> _getCurrentUserObject() async {
     try {
-      final authNotifier = ref.read(authProvider.notifier);
-      final user = await authNotifier.getStoredUser();
-      debugPrint('🔍 Debug - Current user object: $user');
-      return user;
+      final AuthNotifier authNotifier = ref.read(authProvider.notifier);
+      final Map<String, dynamic>? userData =
+          await authNotifier.getStoredUserData();
+      if (userData != null) {
+        final AppUser user = AppUser.fromJson(userData);
+        debugPrint('🔍 Debug - Current user object: $user');
+        return user;
+      }
+      return null;
     } catch (e) {
       debugPrint('❌ Debug - Failed to get current user object: $e');
       return null;
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    debugPrint('🚀 Debug - initState called');
-
-    // Load header data
-    debugPrint('🚀 Debug - About to call _loadHeaderData');
-    _loadHeaderData().then((_) {
-      debugPrint('🚀 Debug - _loadHeaderData completed in initState');
-    }).catchError((e) {
-      debugPrint('🚀 Debug - _loadHeaderData failed in initState: $e');
-    });
-
-    // Load products data with better error handling
-    debugPrint('🚀 Debug - About to call _loadProductsData');
-    _loadProductsData().then((_) {
-      debugPrint('🚀 Debug - _loadProductsData completed in initState');
-    }).catchError((e, stackTrace) {
-      debugPrint('🚀 Debug - _loadProductsData failed in initState: $e');
-      debugPrint('🚀 Debug - Stack trace: $stackTrace');
-    });
-
-    debugPrint('🚀 Debug - Data loading methods called');
   }
 
   Future<void> _loadHeaderData() async {
@@ -241,8 +284,18 @@ class _CashierPageState extends ConsumerState<CashierPage> {
         businessName = businessData?['name'] ?? 'Allnimall Pet Shop';
 
         // Improved user name logic with better fallback
-        String? userNameFromData = userData?['name'];
-        debugPrint('🔄 Debug - userNameFromData: $userNameFromData');
+        String? userNameFromData;
+
+        // Handle nested userData structure
+        if (userData != null && userData['user'] != null) {
+          userNameFromData = userData['user']['name'];
+          debugPrint(
+              '🔄 Debug - userNameFromData from nested structure: $userNameFromData');
+        } else {
+          userNameFromData = userData?['name'];
+          debugPrint(
+              '🔄 Debug - userNameFromData from flat structure: $userNameFromData');
+        }
 
         if (userNameFromData != null && userNameFromData.isNotEmpty) {
           userName = userNameFromData;
@@ -255,7 +308,12 @@ class _CashierPageState extends ConsumerState<CashierPage> {
               '🔄 Debug - Using userName from AppUser object: $userName');
         } else {
           // Try to get username as fallback
-          String? usernameFromData = userData?['username'];
+          String? usernameFromData;
+          if (userData != null && userData['user'] != null) {
+            usernameFromData = userData['user']['username'];
+          } else {
+            usernameFromData = userData?['username'];
+          }
           debugPrint('🔄 Debug - usernameFromData: $usernameFromData');
 
           if (usernameFromData != null && usernameFromData.isNotEmpty) {
@@ -287,10 +345,14 @@ class _CashierPageState extends ConsumerState<CashierPage> {
         isHeaderLoaded = true;
       });
 
-      // Force another setState to ensure UI updates
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {});
-      });
+      // Only add post frame callback if widget is still mounted
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {});
+          }
+        });
+      }
     } catch (e) {
       // Set header loaded even if there's an error
       setState(() {
@@ -301,6 +363,12 @@ class _CashierPageState extends ConsumerState<CashierPage> {
 
   Future<void> _loadProductsData() async {
     debugPrint('🔄 Debug - _loadProductsData started');
+
+    if (!mounted) {
+      debugPrint('❌ Debug - Widget not mounted, skipping _loadProductsData');
+      return;
+    }
+
     setState(() {
       isLoadingProducts = true;
     });
@@ -351,39 +419,57 @@ class _CashierPageState extends ConsumerState<CashierPage> {
       debugPrint(
           '🔍 Debug - Products: ${productsList.map((p) => p.name).toList()}');
 
-      setState(() {
-        products = productsList;
-        isLoadingProducts = false;
-      });
+      if (mounted) {
+        setState(() {
+          products = productsList;
+          filteredProducts = productsList;
+          isLoadingProducts = false;
+
+          // Extract unique categories
+          categories = productsList
+              .map((p) => p.categoryName)
+              .where((c) => c != null && c.isNotEmpty)
+              .map((c) => c!)
+              .toSet()
+              .toList();
+        });
+      }
 
       debugPrint('✅ Debug - _loadProductsData completed successfully');
     } catch (e, stackTrace) {
       debugPrint('❌ Debug - _loadProductsData failed: $e');
       debugPrint('❌ Debug - Stack trace: $stackTrace');
 
-      setState(() {
-        isLoadingProducts = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoadingProducts = false;
+        });
+      }
 
       // Show error toast
-      showToast(
-        context: context,
-        builder: (context, overlay) {
-          return SurfaceCard(
-            child: Basic(
-              title: const Text('Error'),
-              content: Text('Gagal memuat produk: $e'),
-              trailing: AllnimallButton.ghost(
-                onPressed: () => overlay.close(),
-                child: const Text(
-                  'Tutup',
-                  style: TextStyle(color: Colors.white),
+      if (mounted) {
+        showToast(
+          context: context,
+          builder: (context, overlay) {
+            return SurfaceCard(
+              child: Basic(
+                title: const Text('Error'),
+                content: Text('Gagal memuat produk: $e'),
+                trailing: SizedBox(
+                  height: 32,
+                  child: AllnimallButton.ghost(
+                    onPressed: () => overlay.close(),
+                    child: const Text(
+                      'Tutup',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          );
-        },
-      );
+            );
+          },
+        );
+      }
     }
   }
 
@@ -452,30 +538,70 @@ class _CashierPageState extends ConsumerState<CashierPage> {
   double get totalPrice =>
       cartItems.fold(0, (sum, item) => sum + item.totalPrice);
 
-  String _getInitials(String name) {
-    final names = name.split(' ');
-    if (names.length > 1) {
-      return '${names[0][0]}${names[1][0]}';
-    } else {
-      return name[0];
+  Widget _buildProductImage(Product product) {
+    if (product.imageUrl != null && product.imageUrl!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          product.imageUrl!,
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildPlaceholderIcon(product);
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.slate[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          },
+        ),
+      );
     }
+    return _buildPlaceholderIcon(product);
   }
 
-  String _getFirstName(String name) {
-    final names = name.split(' ');
-    if (names.isNotEmpty) {
-      return names[0];
+  Widget _buildPlaceholderIcon(Product product) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: product.stock > 0 ? Colors.blue[50] : Colors.slate[100],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(
+        Icons.pets,
+        size: 24,
+        color: product.stock > 0 ? Colors.blue[600] : Colors.slate[400],
+      ),
+    );
+  }
+
+  String _getFirstName(String fullName) {
+    final parts = fullName.split(' ');
+    return parts.isNotEmpty ? parts.first : fullName;
+  }
+
+  String _getInitials(String name) {
+    final parts = name.split(' ');
+    if (parts.length > 1) {
+      return '${parts.first[0]}${parts.last[0]}';
+    } else {
+      return name.length > 0 ? name[0] : 'U';
     }
-    return name;
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('🔄 Debug - build called');
-    debugPrint('🔍 Debug - isLoadingProducts: $isLoadingProducts');
-    debugPrint('🔍 Debug - products.length: ${products.length}');
-    debugPrint('🔍 Debug - cartItems.length: ${cartItems.length}');
-
     return AuthGuard(
       child: Scaffold(
         child: Row(
@@ -510,8 +636,6 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                             },
                           ),
                         ),
-                        // Refresh button
-                        const Gap(8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
@@ -549,24 +673,22 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                                   ).small(),
                                 ],
                               ),
-
                               const Gap(8),
-
                               // Avatar
                               Container(
                                 width: 24,
                                 height: 24,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.2),
+                                  color: Colors.white,
                                   shape: BoxShape.circle,
                                 ),
                                 child: Center(
                                   child: Text(
-                                    _getInitials(userName ?? 'Kasir'),
+                                    _getInitials(userName ?? 'K'),
                                     style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
@@ -577,11 +699,44 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                       ],
                     ),
                   ),
+                  // Search and Filter Section
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        // Search Input
+                        Expanded(
+                          child: AllnimallTextInput(
+                            controller: _searchController,
+                            placeholder: 'Cari produk...',
+                            features: const [
+                              InputFeature.clear(),
+                            ],
+                          ),
+                        ),
+                        const Gap(16),
+                        // Category Filter
+                        SizedBox(
+                          width: 200,
+                          child: AllnimallSelect<String>(
+                            value: selectedCategory,
+                            onChanged: _onCategoryChanged,
+                            placeholder: const Text('Semua Kategori'),
+                            searchPlaceholder: 'Cari kategori...',
+                            items: categories,
+                            itemBuilder: (context, category) {
+                              return Text(category);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   // Product grid
                   Expanded(
                     child: isLoadingProducts
                         ? const ProductLoading()
-                        : products.isEmpty
+                        : filteredProducts.isEmpty
                             ? Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -601,13 +756,17 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                                         .muted()
                                         .small(),
                                     const SizedBox(height: 16),
-                                    AllnimallButton.primary(
-                                      onPressed: () => _loadProductsData(),
-                                      child: const Text(
-                                        'Muat Ulang',
-                                        style: TextStyle(color: Colors.white),
+                                    SizedBox(
+                                      width: 120,
+                                      height: 36,
+                                      child: AllnimallButton.primary(
+                                        onPressed: () => _loadProductsData(),
+                                        child: const Text(
+                                          'Muat Ulang',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
                                       ),
-                                    ).constrained(width: 120, height: 36),
+                                    ),
                                   ],
                                 ),
                               )
@@ -620,22 +779,56 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                                   mainAxisSpacing: 16,
                                   childAspectRatio: 1.2,
                                 ),
-                                itemCount: products.length,
+                                itemCount: filteredProducts.length + 1,
                                 itemBuilder: (context, index) {
-                                  final product = products[index];
-                                  return Card(
+                                  // First item is always the "Add Product" placeholder
+                                  if (index == 0) {
+                                    return SurfaceCard(
+                                      padding: const EdgeInsets.all(12),
+                                      child: Clickable(
+                                        onPressed: () {
+                                          // TODO: Navigate to add product page
+                                        },
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Container(
+                                              width: 32,
+                                              height: 32,
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue[50],
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.add,
+                                                size: 20,
+                                                color: Colors.blue[600],
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const Text('Tambah Produk')
+                                                .semiBold()
+                                                .small(),
+                                            const SizedBox(height: 4),
+                                            const Text('Klik untuk menambah')
+                                                .muted()
+                                                .xSmall(),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }
+
+                                  // Regular product items
+                                  final product = filteredProducts[index - 1];
+                                  return SurfaceCard(
                                     padding: const EdgeInsets.all(12),
                                     child: Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.center,
                                       children: [
-                                        Icon(
-                                          Icons.pets,
-                                          size: 32,
-                                          color: product.stock > 0
-                                              ? Colors.blue[600]
-                                              : Colors.slate[400],
-                                        ),
+                                        _buildProductImage(product),
                                         const SizedBox(height: 8),
                                         Text(product.name).semiBold(),
                                         const SizedBox(height: 4),
@@ -647,16 +840,19 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                                             .muted()
                                             .xSmall(),
                                         const SizedBox(height: 8),
-                                        AllnimallButton.primary(
-                                          onPressed: product.stock > 0
-                                              ? () => _addToCart(product)
-                                              : null,
-                                          child: const Text(
-                                            'Tambah',
-                                            style:
-                                                TextStyle(color: Colors.white),
+                                        SizedBox(
+                                          height: 32,
+                                          child: AllnimallButton.primary(
+                                            onPressed: product.stock > 0
+                                                ? () => _addToCart(product)
+                                                : null,
+                                            child: const Text(
+                                              'Tambah',
+                                              style: TextStyle(
+                                                  color: Colors.white),
+                                            ),
                                           ),
-                                        ).constrained(height: 32),
+                                        ),
                                       ],
                                     ),
                                   );
@@ -711,7 +907,7 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                                   itemCount: cartItems.length,
                                   itemBuilder: (context, index) {
                                     final cartItem = cartItems[index];
-                                    return Card(
+                                    return SurfaceCard(
                                       padding: const EdgeInsets.all(12),
                                       child: Column(
                                         crossAxisAlignment:
@@ -778,7 +974,7 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                                 ),
                     ),
                     // Cart summary
-                    Card(
+                    SurfaceCard(
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -793,15 +989,18 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          AllnimallButton.primary(
-                            onPressed: cartItems.isNotEmpty
-                                ? () {
-                                    // Checkout logic
-                                  }
-                                : null,
-                            child: const Text(
-                              'Bayar',
-                              style: TextStyle(color: Colors.white),
+                          SizedBox(
+                            height: 40,
+                            child: AllnimallButton.primary(
+                              onPressed: cartItems.isNotEmpty
+                                  ? () {
+                                      // Checkout logic
+                                    }
+                                  : null,
+                              child: const Text(
+                                'Bayar',
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ),
                           ),
                         ],
