@@ -265,7 +265,9 @@ class _AllnimallButtonState extends State<AllnimallButton>
                         ? const SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(),
+                            child: CircularProgressIndicator(
+                              onSurface: true,
+                            ),
                           )
                         : widget.child,
                   ),

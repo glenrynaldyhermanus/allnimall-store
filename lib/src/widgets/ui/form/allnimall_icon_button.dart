@@ -264,15 +264,17 @@ class _AllnimallIconButtonState extends State<AllnimallIconButton>
                   ),
                   child: Center(
                     child: widget.isLoading
-                                                 ? const SizedBox(
-                             width: 16,
-                             height: 16,
-                             child: CircularProgressIndicator(),
-                           )
-                         : DefaultTextStyle(
-                             style: TextStyle(color: _getIconColor()),
-                             child: widget.icon,
-                           ),
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              onSurface: true,
+                            ),
+                          )
+                        : DefaultTextStyle(
+                            style: TextStyle(color: _getIconColor()),
+                            child: widget.icon,
+                          ),
                   ),
                 ),
               ),

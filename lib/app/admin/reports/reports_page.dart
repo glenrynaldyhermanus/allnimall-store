@@ -1,30 +1,54 @@
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
+import 'package:allnimall_store/src/widgets/navigation/sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:allnimall_store/src/core/theme/app_theme.dart';
-import 'package:allnimall_store/src/widgets/app_sidebar.dart';
 
-class OrganizationPage extends StatefulWidget {
-  const OrganizationPage({super.key});
+class ReportsPage extends StatefulWidget {
+  const ReportsPage({super.key});
 
   @override
-  State<OrganizationPage> createState() => _OrganizationPageState();
+  State<ReportsPage> createState() => _ReportsPageState();
 }
 
-class _OrganizationPageState extends State<OrganizationPage> {
-  String _selectedMenu = 'stores';
+class _ReportsPageState extends State<ReportsPage> {
+  String _selectedMenu = 'sales';
 
-  final List<OrganizationMenuItem> _menuItems = [
-    OrganizationMenuItem(
-      id: 'stores',
-      title: 'Toko & Cabang',
-      icon: Icons.store_outlined,
-      description: 'Kelola toko dan cabang',
+  final List<ReportMenuItem> _menuItems = [
+    ReportMenuItem(
+      id: 'sales',
+      title: 'Laporan Penjualan',
+      icon: Icons.trending_up_outlined,
+      description: 'Laporan penjualan harian, mingguan, bulanan',
     ),
-    OrganizationMenuItem(
+    ReportMenuItem(
+      id: 'inventory',
+      title: 'Laporan Inventory',
+      icon: Icons.inventory_outlined,
+      description: 'Laporan stok masuk, keluar, dan sisa',
+    ),
+    ReportMenuItem(
+      id: 'financial',
+      title: 'Laporan Keuangan',
+      icon: Icons.account_balance_outlined,
+      description: 'Laporan laba rugi, cash flow',
+    ),
+    ReportMenuItem(
+      id: 'products',
+      title: 'Laporan Produk',
+      icon: Icons.bar_chart_outlined,
+      description: 'Produk terlaris, slow moving',
+    ),
+    ReportMenuItem(
+      id: 'customers',
+      title: 'Laporan Pelanggan',
+      icon: Icons.people_alt_outlined,
+      description: 'Analisis pelanggan dan loyalitas',
+    ),
+    ReportMenuItem(
       id: 'staff',
-      title: 'Staff',
-      icon: Icons.badge_outlined,
-      description: 'Kelola data karyawan',
+      title: 'Laporan Karyawan',
+      icon: Icons.work_outline,
+      description: 'Performa dan aktivitas karyawan',
     ),
   ];
 
@@ -49,7 +73,7 @@ class _OrganizationPageState extends State<OrganizationPage> {
         child: Row(
           children: [
             // Sidebar
-            const AppSidebar(),
+            const Sidebar(),
             // Main Content
             Expanded(
               child: Column(
@@ -71,13 +95,13 @@ class _OrganizationPageState extends State<OrganizationPage> {
                     child: Row(
                       children: [
                         const Icon(
-                          Icons.business,
+                          Icons.analytics,
                           color: AppColors.primary,
                           size: 24,
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Organisasi',
+                          'Laporan',
                           style: _getSystemFont(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -114,7 +138,7 @@ class _OrganizationPageState extends State<OrganizationPage> {
                               Padding(
                                 padding: const EdgeInsets.all(24),
                                 child: Text(
-                                  'Menu',
+                                  'Jenis Laporan',
                                   style: _getSystemFont(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -239,7 +263,7 @@ class _OrganizationPageState extends State<OrganizationPage> {
     return _buildComingSoonContent(selectedItem);
   }
 
-  Widget _buildComingSoonContent(OrganizationMenuItem item) {
+  Widget _buildComingSoonContent(ReportMenuItem item) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -291,13 +315,13 @@ class _OrganizationPageState extends State<OrganizationPage> {
   }
 }
 
-class OrganizationMenuItem {
+class ReportMenuItem {
   final String id;
   final String title;
   final IconData icon;
   final String description;
 
-  OrganizationMenuItem({
+  ReportMenuItem({
     required this.id,
     required this.title,
     required this.icon,

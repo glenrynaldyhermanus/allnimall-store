@@ -1,15 +1,14 @@
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:allnimall_store/app/cashier/cashier_page.dart';
+import 'package:allnimall_store/app/admin/cashier/cashier_page.dart';
+import 'package:allnimall_store/app/admin/cashier/payment/payment_page.dart';
+import 'package:allnimall_store/app/admin/cashier/payment/success_page.dart';
+import 'package:allnimall_store/app/admin/management/management_page.dart';
+import 'package:allnimall_store/app/admin/organization/organization_page.dart';
+import 'package:allnimall_store/app/admin/reports/reports_page.dart';
 import 'package:allnimall_store/app/login/login_page.dart';
-import 'package:allnimall_store/app/management/management_page.dart';
-import 'package:allnimall_store/app/organization/organization_page.dart';
-import 'package:allnimall_store/app/payment/payment_page.dart';
-import 'package:allnimall_store/app/payment/success_page.dart';
-
-import 'package:allnimall_store/app/reports/reports_page.dart';
 import 'package:allnimall_store/src/providers/auth_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 class AppRouter {
   static const String loginRoute = '/login';

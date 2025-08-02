@@ -165,6 +165,35 @@ class _ProductPanelState extends State<ProductPanel>
                         ],
                       ),
                     ),
+                    const Gap(32),
+                    // Version Section
+                    FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              LucideIcons.info,
+                              color: Colors.white.withValues(alpha: 0.8),
+                              size: 16,
+                            ),
+                            const Gap(8),
+                            Text(
+                              'Versi 1.0.0',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withValues(alpha: 0.8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

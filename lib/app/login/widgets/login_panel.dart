@@ -1,13 +1,12 @@
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
+import 'package:allnimall_store/src/core/utils/responsive.dart';
+import 'package:allnimall_store/src/providers/auth_provider.dart';
+import 'package:allnimall_store/src/widgets/ui/feedback/allnimall_toast.dart';
+import 'package:allnimall_store/src/widgets/ui/form/allnimall_button.dart';
+import 'package:allnimall_store/src/widgets/ui/form/allnimall_text_input.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
-
-import 'package:allnimall_store/src/providers/auth_provider.dart';
-import 'package:allnimall_store/src/core/theme/app_theme.dart';
-import 'package:allnimall_store/src/core/utils/responsive.dart';
-import 'package:allnimall_store/src/widgets/allnimall_button.dart';
-import 'package:allnimall_store/src/widgets/allnimall_text_input.dart';
-import 'package:allnimall_store/src/widgets/allnimall_toast.dart';
 
 class LoginPanel extends ConsumerStatefulWidget {
   const LoginPanel({super.key});
@@ -127,13 +126,7 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
           _isLoading = false;
         });
 
-        // Show success toast
-        AllnimallToast.success(
-          context: context,
-          title: 'Login Berhasil',
-          content: 'Selamat datang kembali, ${next.user.name}!',
-        );
-
+        // Redirect directly without success toast since user will be redirected
         GoRouter.of(context).go('/pos');
       } else if (next is AuthError) {
         debugPrint('❌ Auth error: ${next.message}');
@@ -311,34 +304,28 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
                                       ? () async {
                                           try {
                                             final formValues =
-                                                await context
-                                                    .submitForm();
+                                                await context.submitForm();
                                             debugPrint(
                                                 '✅ Form submitted successfully: $formValues');
 
                                             // Extract username and password from form values
                                             final username =
-                                                _usernameKey[
-                                                    formValues.values];
+                                                _usernameKey[formValues.values];
                                             final password =
-                                                _passwordKey[
-                                                    formValues.values];
+                                                _passwordKey[formValues.values];
 
                                             if (username != null &&
                                                 password != null) {
                                               // Call auth provider to sign in
                                               ref
-                                                  .read(authProvider
-                                                      .notifier)
-                                                  .signIn(username,
-                                                      password);
+                                                  .read(authProvider.notifier)
+                                                  .signIn(username, password);
                                             } else {
                                               // Show toast for empty fields
                                               if (context.mounted) {
                                                 AllnimallToast.warning(
                                                   context: context,
-                                                  title:
-                                                      'Data Tidak Lengkap',
+                                                  title: 'Data Tidak Lengkap',
                                                   content:
                                                       'Masukkan username dan password',
                                                 );
@@ -351,8 +338,7 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
                                             if (context.mounted) {
                                               AllnimallToast.error(
                                                 context: context,
-                                                title:
-                                                    'Validasi Form Gagal',
+                                                title: 'Validasi Form Gagal',
                                                 content:
                                                     'Silakan periksa kembali data yang Anda masukkan.',
                                               );
@@ -360,8 +346,8 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
                                           }
                                         }
                                       : null,
-                                  isLoading: _isLoading ||
-                                      authState is AuthLoading,
+                                  isLoading:
+                                      _isLoading || authState is AuthLoading,
                                   child: const Text(
                                     'Masuk',
                                     style: TextStyle(
@@ -388,4 +374,4 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
       ),
     );
   }
-} 
+}

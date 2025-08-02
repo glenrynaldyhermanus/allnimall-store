@@ -1,15 +1,15 @@
+import 'package:allnimall_store/app/admin/cashier/widgets/pos_cart.dart';
+import 'package:allnimall_store/app/admin/cashier/widgets/pos_header.dart';
+import 'package:allnimall_store/app/admin/cashier/widgets/product_card.dart';
+import 'package:allnimall_store/src/core/services/local_storage_service.dart';
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
+
+import 'package:allnimall_store/src/data/objects/product.dart';
+import 'package:allnimall_store/src/providers/cashier_provider.dart';
+import 'package:allnimall_store/src/widgets/navigation/sidebar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:allnimall_store/app/cashier/widgets/pos_cart.dart';
-import 'package:allnimall_store/app/cashier/widgets/pos_header.dart';
-import 'package:allnimall_store/app/cashier/widgets/product_card.dart';
-import 'package:allnimall_store/src/providers/cashier_provider.dart';
-import 'package:allnimall_store/src/core/services/local_storage_service.dart';
-import 'package:allnimall_store/src/core/theme/app_theme.dart';
-import 'package:allnimall_store/src/core/utils/responsive.dart';
-import 'package:allnimall_store/src/data/objects/product.dart';
-import 'package:allnimall_store/src/widgets/app_sidebar.dart';
 
 class CashierPage extends ConsumerStatefulWidget {
   const CashierPage({super.key});
@@ -136,7 +136,6 @@ class _CashierPageState extends ConsumerState<CashierPage> {
 
   @override
   Widget build(BuildContext context) {
-    
     final cashierState = ref.watch(cashierProvider);
 
     // Listen to cashier state changes
@@ -187,8 +186,7 @@ class _CashierPageState extends ConsumerState<CashierPage> {
               cashierState.message,
               style: _getSystemFont(
                 fontSize: 14,
-                color:
-                    AppColors.secondaryText,
+                color: AppColors.secondaryText,
               ),
             ),
             const SizedBox(height: 24),
@@ -209,7 +207,7 @@ class _CashierPageState extends ConsumerState<CashierPage> {
           child: Row(
             children: [
               // Sidebar - hanya tampil jika bukan web
-              if (!Responsive.isWeb()) const AppSidebar(),
+              const Sidebar(),
               // Main Content
               Expanded(
                 child: Column(

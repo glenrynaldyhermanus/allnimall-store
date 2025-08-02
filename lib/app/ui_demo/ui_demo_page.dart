@@ -1,7 +1,6 @@
+import 'package:allnimall_store/src/widgets/ui/form/allnimall_button.dart';
+import 'package:allnimall_store/src/widgets/ui/form/allnimall_icon_button.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
-
-import 'package:allnimall_store/src/widgets/allnimall_button.dart';
-import 'package:allnimall_store/src/widgets/allnimall_icon_button.dart';
 
 class UiDemoPage extends StatelessWidget {
   const UiDemoPage({super.key});
