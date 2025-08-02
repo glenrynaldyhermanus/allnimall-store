@@ -1,365 +1,350 @@
-import 'package:allnimall_store/app/admin/cashier/widgets/pos_cart.dart';
-import 'package:allnimall_store/app/admin/cashier/widgets/pos_header.dart';
-import 'package:allnimall_store/app/admin/cashier/widgets/product_card.dart';
-import 'package:allnimall_store/src/core/services/local_storage_service.dart';
-import 'package:allnimall_store/src/core/theme/app_theme.dart';
-
-import 'package:allnimall_store/src/data/objects/product.dart';
-import 'package:allnimall_store/src/providers/cashier_provider.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:allnimall_store/src/widgets/guards/auth_guard.dart';
+import 'package:allnimall_store/src/widgets/ui/form/allnimall_button.dart';
 import 'package:allnimall_store/src/widgets/navigation/sidebar.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import 'package:allnimall_store/src/data/objects/product.dart';
+import 'package:allnimall_store/src/data/objects/cart_item.dart';
+import 'package:allnimall_store/src/data/usecases/get_all_products_usecase.dart';
+import 'package:allnimall_store/src/core/services/local_storage_service.dart';
+import 'package:allnimall_store/src/data/repositories/management_repository_impl.dart';
+import 'package:allnimall_store/src/core/services/supabase_service.dart';
+import 'package:allnimall_store/src/widgets/ui/form/allnimall_icon_button.dart';
 
-class CashierPage extends ConsumerStatefulWidget {
+class CashierPage extends StatefulWidget {
   const CashierPage({super.key});
 
   @override
-  ConsumerState<CashierPage> createState() => _CashierPageState();
+  State<CashierPage> createState() => _CashierPageState();
 }
 
-class _CashierPageState extends ConsumerState<CashierPage> {
-  // Business, Store, and User data
-  String _businessName = '';
-  String _storeName = '';
-  String _cashierName = '';
-
-  // Helper function untuk menggunakan system font
-  TextStyle _getSystemFont({
-    required double fontSize,
-    FontWeight? fontWeight,
-    Color? color,
-  }) {
-    return TextStyle(
-      fontSize: fontSize,
-      fontWeight: fontWeight,
-      color: color,
-    );
-  }
+class _CashierPageState extends State<CashierPage> {
+  List<Product> products = [];
+  List<CartItem> cartItems = [];
+  String? storeName;
+  String? businessName;
+  String? userName;
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _loadBusinessAndStoreData();
+    _loadData();
   }
 
-  Future<void> _loadBusinessAndStoreData() async {
+  Future<void> _loadData() async {
+    setState(() {
+      isLoading = true;
+    });
+
     try {
-      // Load business data
-      final businessData = await LocalStorageService.getBusinessData();
-      if (businessData != null) {
-        setState(() {
-          _businessName = businessData['name'] ?? 'Unknown Business';
-        });
-      }
-
-      // Load store data
-      final storeData = await LocalStorageService.getStoreData();
-      if (storeData != null) {
-        setState(() {
-          _storeName = storeData['name'] ?? 'Unknown Store';
-        });
-      }
-
-      // Load user data
+      // Load user, business, and store data
       final userData = await LocalStorageService.getUserData();
-      if (userData != null) {
-        setState(() {
-          _cashierName = userData['name'] ?? 'Unknown Staff';
-        });
-      }
+      final businessData = await LocalStorageService.getBusinessData();
+      final storeData = await LocalStorageService.getStoreData();
+
+      // Load products
+      final managementRepository =
+          ManagementRepositoryImpl(SupabaseService.client);
+      final getAllProductsUseCase = GetAllProductsUseCase(managementRepository);
+      final productsList = await getAllProductsUseCase.execute();
+
+      setState(() {
+        products = productsList.where((product) => product.isActive).toList();
+        storeName = storeData?['name'] ?? 'Cabang';
+        businessName = businessData?['name'] ?? 'Allnimall Pet Shop';
+        userName = userData?['name'] ?? 'Staff';
+        isLoading = false;
+      });
     } catch (e) {
-      //print('Error loading business/store data: $e');
+      setState(() {
+        isLoading = false;
+      });
+      // Handle error
     }
   }
 
   void _addToCart(Product product) {
-    ref.read(cashierProvider.notifier).addToCart(product.id, 1);
-  }
+    setState(() {
+      final existingItemIndex = cartItems.indexWhere(
+        (item) => item.product.id == product.id,
+      );
 
-  void _updateQuantity(int index, int newQuantity) {
-    if (newQuantity <= 0) {
-      // Remove item from cart
-      final currentState = ref.read(cashierProvider);
-      if (currentState is CashierLoaded &&
-          index < currentState.cartItems.length) {
-        final item = currentState.cartItems[index];
-        ref.read(cashierProvider.notifier).updateCartQuantity(
-              item.product.id,
-              0,
-            );
+      if (existingItemIndex != -1) {
+        // Update quantity if item already exists
+        final existingItem = cartItems[existingItemIndex];
+        cartItems[existingItemIndex] = CartItem(
+          id: existingItem.id,
+          product: existingItem.product,
+          quantity: existingItem.quantity + 1,
+          storeId: existingItem.storeId,
+          createdAt: existingItem.createdAt,
+        );
+      } else {
+        // Add new item to cart
+        final newCartItem = CartItem(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          product: product,
+          quantity: 1,
+          storeId: product.storeId,
+          createdAt: DateTime.now(),
+        );
+        cartItems.add(newCartItem);
       }
-    } else {
-      final currentState = ref.read(cashierProvider);
-      if (currentState is CashierLoaded &&
-          index < currentState.cartItems.length) {
-        final item = currentState.cartItems[index];
-        ref.read(cashierProvider.notifier).updateCartQuantity(
-              item.product.id,
-              newQuantity,
-            );
+    });
+  }
+
+  void _removeFromCart(String cartItemId) {
+    setState(() {
+      cartItems.removeWhere((item) => item.id == cartItemId);
+    });
+  }
+
+  void _updateQuantity(String cartItemId, int newQuantity) {
+    setState(() {
+      final itemIndex = cartItems.indexWhere((item) => item.id == cartItemId);
+      if (itemIndex != -1) {
+        final item = cartItems[itemIndex];
+        if (newQuantity > 0) {
+          cartItems[itemIndex] = CartItem(
+            id: item.id,
+            product: item.product,
+            quantity: newQuantity,
+            storeId: item.storeId,
+            createdAt: item.createdAt,
+          );
+        } else {
+          cartItems.removeAt(itemIndex);
+        }
       }
-    }
+    });
   }
 
-  void _clearCart() {
-    ref.read(cashierProvider.notifier).clearCart();
-  }
-
-  void _processPayment() {
-    final currentState = ref.read(cashierProvider);
-    if (currentState is CashierLoaded && currentState.cartItems.isNotEmpty) {
-      // Navigate to payment page instead of showing dialog
-      context.go('/payment');
-    }
-  }
-
-  List<String> _getCategories(CashierLoaded state) {
-    final categories = state.products
-        .map((p) => p.categoryName ?? 'Uncategorized')
-        .toSet()
-        .toList();
-    categories.insert(0, 'All');
-    return categories;
-  }
-
-  List<Product> _getFilteredProducts(CashierLoaded state) {
-    if (state.selectedCategory == 'all' || state.selectedCategory == 'All') {
-      return state.products;
-    }
-
-    final filtered = state.products
-        .where((p) => p.categoryName == state.selectedCategory)
-        .toList();
-    return filtered;
-  }
+  double get totalPrice =>
+      cartItems.fold(0, (sum, item) => sum + item.totalPrice);
 
   @override
   Widget build(BuildContext context) {
-    final cashierState = ref.watch(cashierProvider);
-
-    // Listen to cashier state changes
-    ref.listen<CashierState>(cashierProvider, (previous, next) {
-      if (next is CashierError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${next.message}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    });
-
-    if (cashierState is CashierInitial) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(cashierProvider.notifier).loadProducts();
-      });
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (cashierState is CashierLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    if (cashierState is CashierError) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return AuthGuard(
+      child: Scaffold(
+        child: Row(
           children: [
-            const Icon(
-              Icons.error_outline,
-              size: 64,
-              color: AppColors.error,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Error loading data',
-              style: _getSystemFont(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              cashierState.message,
-              style: _getSystemFont(
-                fontSize: 14,
-                color: AppColors.secondaryText,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () =>
-                  ref.read(cashierProvider.notifier).loadProducts(),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (cashierState is CashierLoaded) {
-      return Scaffold(
-        body: Container(
-          color: AppColors.surfaceBackground,
-          child: Row(
-            children: [
-              // Sidebar - hanya tampil jika bukan web
-              const Sidebar(),
-              // Main Content
-              Expanded(
-                child: Column(
-                  children: [
-                    // Page Header
-                    PosHeader(
-                      businessName: _businessName,
-                      storeName: _storeName,
-                      cashierName: _cashierName,
+            // Sidebar
+            const Sidebar(),
+            // Left side - Product grid
+            Expanded(
+              flex: 2,
+              child: Column(
+                children: [
+                  // Header
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Colors.slate[100]),
+                      ),
                     ),
-                    // Content
-                    Expanded(
-                      child: SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.all(24),
-                          child: Row(
-                            children: [
-                              // Products Section
-                              Expanded(
-                                flex: 2,
+                    child: Row(
+                      children: [
+                        Text(businessName ?? 'Allnimall Pet Shop').h1().bold(),
+                        const Spacer(),
+                        Text(storeName ?? 'Cabang').muted(),
+                        const SizedBox(width: 16),
+                        Text(userName ?? 'Staff').muted(),
+                      ],
+                    ),
+                  ),
+                  // Product grid
+                  Expanded(
+                    child: isLoading
+                        ? const Center(
+                            child: CircularProgressIndicator(),
+                          )
+                        : GridView.builder(
+                            padding: const EdgeInsets.all(16),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1.2,
+                            ),
+                            itemCount: products.length,
+                            itemBuilder: (context, index) {
+                              final product = products[index];
+                              return Card(
+                                padding: const EdgeInsets.all(12),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    // Search and Category Row
-                                    Row(
-                                      children: [
-                                        // Search Field
-                                        Expanded(
-                                          flex: 2,
-                                          child: TextField(
-                                            decoration: const InputDecoration(
-                                              labelText: 'Search Pet Products',
-                                              hintText: 'Type product name...',
-                                              prefixIcon: Icon(Icons.search),
-                                              border: OutlineInputBorder(),
-                                            ),
-                                            onChanged: (value) {
-                                              ref
-                                                  .read(
-                                                      cashierProvider.notifier)
-                                                  .searchProducts(value);
-                                            },
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        // Category Filter
-                                        Expanded(
-                                          flex: 1,
-                                          child:
-                                              DropdownButtonFormField<String>(
-                                            value: cashierState
-                                                        .selectedCategory ==
-                                                    'all'
-                                                ? 'All'
-                                                : cashierState.selectedCategory,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Category',
-                                              border: OutlineInputBorder(),
-                                              contentPadding:
-                                                  EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 8),
-                                            ),
-                                            isExpanded: true,
-                                            items: _getCategories(cashierState)
-                                                .map((category) {
-                                              return DropdownMenuItem(
-                                                value: category,
-                                                child: Text(
-                                                  category,
-                                                  style: _getSystemFont(
-                                                    fontSize: 14,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              );
-                                            }).toList(),
-                                            onChanged: (value) {
-                                              if (value != null) {
-                                                ref
-                                                    .read(cashierProvider
-                                                        .notifier)
-                                                    .filterByCategory(value);
-                                              }
-                                            },
-                                          ),
-                                        ),
-                                      ],
+                                    Icon(
+                                      Icons.pets,
+                                      size: 32,
+                                      color: product.stock > 0
+                                          ? Colors.blue[600]
+                                          : Colors.slate[400],
                                     ),
-                                    const SizedBox(height: 24),
-                                    // Products Grid
-                                    Expanded(
-                                      child: Builder(
-                                        builder: (context) {
-                                          final filteredProducts =
-                                              _getFilteredProducts(
-                                                  cashierState);
-
-                                          return GridView.builder(
-                                            gridDelegate:
-                                                const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 4,
-                                              childAspectRatio: 1.1,
-                                              crossAxisSpacing: 16,
-                                              mainAxisSpacing: 16,
-                                            ),
-                                            itemCount: filteredProducts.length,
-                                            itemBuilder: (context, index) {
-                                              final product =
-                                                  filteredProducts[index];
-                                              return ProductCard(
-                                                product: product,
-                                                onTap: () =>
-                                                    _addToCart(product),
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(product.name).semiBold(),
+                                    const SizedBox(height: 4),
+                                    Text('Rp ${product.price.toStringAsFixed(0)}')
+                                        .muted()
+                                        .small(),
+                                    const SizedBox(height: 4),
+                                    Text('Stok: ${product.stock}')
+                                        .muted()
+                                        .xSmall(),
+                                    const SizedBox(height: 8),
+                                    AllnimallButton.primary(
+                                      onPressed: product.stock > 0
+                                          ? () => _addToCart(product)
+                                          : null,
+                                      child: const Text('Tambah'),
+                                    ).constrained(height: 32),
                                   ],
                                 ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+            // Right side - Cart
+            Expanded(
+              flex: 1,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    left: BorderSide(color: Colors.slate[100]),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text('Keranjang Belanja').h2().bold(),
+                    const SizedBox(height: 16),
+                    // Cart items
+                    Expanded(
+                      child: cartItems.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.shopping_cart_outlined,
+                                    size: 64,
+                                    color: Colors.slate[100],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text('Keranjang kosong')
+                                      .muted()
+                                      .large(),
+                                  const SizedBox(height: 8),
+                                  const Text(
+                                          'Pilih produk untuk ditambahkan ke keranjang')
+                                      .muted()
+                                      .small(),
+                                ],
                               ),
-                              const SizedBox(width: 24),
-                              // Cart Section
-                              Expanded(
-                                flex: 1,
-                                child: PosCart(
-                                  state: cashierState,
-                                  onClearCart: _clearCart,
-                                  onUpdateQuantity: _updateQuantity,
-                                  onProcessPayment: _processPayment,
-                                ),
-                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: cartItems.length,
+                              itemBuilder: (context, index) {
+                                final cartItem = cartItems[index];
+                                return Card(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(cartItem.product.name)
+                                                .semiBold(),
+                                          ),
+                                          IconButton.ghost(
+                                            onPressed: () =>
+                                                _removeFromCart(cartItem.id),
+                                            icon: const Icon(Icons.close),
+                                            size: ButtonSize.small,
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          Text('Rp ${cartItem.product.price.toStringAsFixed(0)}')
+                                              .muted()
+                                              .small(),
+                                          const Spacer(),
+                                          Row(
+                                            children: [
+                                              AllnimallIconButton.ghost(
+                                                onPressed: () =>
+                                                    _updateQuantity(cartItem.id,
+                                                        cartItem.quantity - 1),
+                                                icon: const Icon(Icons.remove),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text('${cartItem.quantity}')
+                                                  .semiBold(),
+                                              const SizedBox(width: 8),
+                                              AllnimallIconButton.ghost(
+                                                onPressed: () =>
+                                                    _updateQuantity(cartItem.id,
+                                                        cartItem.quantity + 1),
+                                                icon: const Icon(Icons.add),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text('Total: Rp ${cartItem.totalPrice.toStringAsFixed(0)}')
+                                          .semiBold()
+                                          .small(),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                    // Cart summary
+                    Card(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('Total:').semiBold(),
+                              const Spacer(),
+                              Text('Rp ${totalPrice.toStringAsFixed(0)}')
+                                  .h3()
+                                  .bold(),
                             ],
                           ),
-                        ),
+                          const SizedBox(height: 16),
+                          AllnimallButton.primary(
+                            onPressed: cartItems.isNotEmpty
+                                ? () {
+                                    // Checkout logic
+                                  }
+                                : null,
+                            child: const Text('Bayar'),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
-    }
-
-    return const Center(
-      child: CircularProgressIndicator(),
+      ),
     );
   }
 }

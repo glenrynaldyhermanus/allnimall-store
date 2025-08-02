@@ -1,5 +1,6 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:allnimall_store/src/core/theme/app_theme.dart';
+import 'package:allnimall_store/src/core/utils/package_info_utils.dart';
 import 'package:allnimall_store/app/login/widgets/feature_item.dart';
 
 class ProductPanel extends StatefulWidget {
@@ -15,6 +16,7 @@ class _ProductPanelState extends State<ProductPanel>
   late AnimationController _fadeController;
   late Animation<double> _leftPanelSlideAnimation;
   late Animation<double> _fadeAnimation;
+  String _versionText = 'Versi 1.0.0';
 
   @override
   void initState() {
@@ -50,6 +52,18 @@ class _ProductPanelState extends State<ProductPanel>
   }
 
   void _startAnimations() async {
+    // Load version info
+    try {
+      final version = await PackageInfoUtils.getShortVersion();
+      if (mounted) {
+        setState(() {
+          _versionText = version;
+        });
+      }
+    } catch (e) {
+      // Keep default version if loading fails
+    }
+
     await Future.delayed(const Duration(milliseconds: 300));
     _leftPanelController.forward();
 
@@ -105,16 +119,42 @@ class _ProductPanelState extends State<ProductPanel>
                             ),
                           ),
                           const Gap(8),
-                          const Text(
-                            'Allnimall Store',
-                            style: TextStyle(
-                              fontSize: 48,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: -1,
-                            ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text(
+                                'Allnimall Store',
+                                style: TextStyle(
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  letterSpacing: -1,
+                                ),
+                              ),
+                              const Gap(12),
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(4)),
+                                  ),
+                                  child: Text(
+                                    _versionText,
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      color: AppColors.primary,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          const Gap(16),
+                          const Gap(4),
                           Text(
                             'Aplikasi Kasir yang Mengutamakan Hewan Peliharaan',
                             style: TextStyle(
@@ -166,34 +206,6 @@ class _ProductPanelState extends State<ProductPanel>
                       ),
                     ),
                     const Gap(32),
-                    // Version Section
-                    FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              LucideIcons.info,
-                              color: Colors.white.withValues(alpha: 0.8),
-                              size: 16,
-                            ),
-                            const Gap(8),
-                            Text(
-                              'Versi 1.0.0',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white.withValues(alpha: 0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
                   ],
                 ),
               ),

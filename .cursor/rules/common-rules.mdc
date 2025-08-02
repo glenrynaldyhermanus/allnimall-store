@@ -22,4 +22,3 @@ alwaysApply: true
 ## Quality Assurance
 
 **Flutter analyze** - Setiap ada perubahan, jalankan `flutter analyze` dan perbaiki masalah yang ditemukan
-**Logging perubahan** - Setiap ada perubahan yang signifikan, simpan di folder `/logs/{name}.md` name sesuai konteks perubahan. Lalu di dalam file.md tersebut di catat tanggal dan jam computer saya saat itu.

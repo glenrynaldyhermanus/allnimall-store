@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:allnimall_store/src/providers/cashier_provider.dart';
 import 'package:allnimall_store/src/core/services/supabase_service.dart';
+import 'package:allnimall_store/src/widgets/guards/auth_guard.dart';
 
 class PaymentPage extends ConsumerStatefulWidget {
   const PaymentPage({super.key});
@@ -284,343 +285,354 @@ class _PaymentPageState extends ConsumerState<PaymentPage>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Pembayaran'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+    return AuthGuard(
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: AppBar(
+          title: const Text('Pembayaran'),
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
         ),
-      ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : FadeTransition(
-              opacity: _fadeAnimation,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Debug Info (temporary)
-                    if (cartItems.isEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.orange[100],
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.orange[300]!),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Debug Info:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.orange[800],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text('Cart Items: ${cartItems.length}'),
-                            Text(
-                                'Payment Methods: ${storePaymentMethods.length}'),
-                            Text('Payment Types: ${paymentTypes.length}'),
-                          ],
-                        ),
-                      ),
-                    // Order Summary Section
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.receipt_long,
-                                    color: Colors.orange[600]),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Ringkasan Pesanan',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[800],
-                                  ),
+        body: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : FadeTransition(
+                opacity: _fadeAnimation,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Debug Info (temporary)
+                      if (cartItems.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange[100],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.orange[300]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Debug Info:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange[800],
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            ...cartItems.map((item) => Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 8),
-                                  child: Row(
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.network(
-                                          item['product']['image_url'] ?? '',
-                                          width: 50,
-                                          height: 50,
-                                          fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  Container(
+                              ),
+                              const SizedBox(height: 8),
+                              Text('Cart Items: ${cartItems.length}'),
+                              Text(
+                                  'Payment Methods: ${storePaymentMethods.length}'),
+                              Text('Payment Types: ${paymentTypes.length}'),
+                            ],
+                          ),
+                        ),
+                      // Order Summary Section
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.receipt_long,
+                                      color: Colors.orange[600]),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Ringkasan Pesanan',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[800],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              ...cartItems.map((item) => Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 8),
+                                    child: Row(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          child: Image.network(
+                                            item['product']['image_url'] ?? '',
                                             width: 50,
                                             height: 50,
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[300],
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
+                                            fit: BoxFit.cover,
+                                            errorBuilder:
+                                                (context, error, stackTrace) =>
+                                                    Container(
+                                              width: 50,
+                                              height: 50,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[300],
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: Icon(Icons.image,
+                                                  color: Colors.grey[600]),
                                             ),
-                                            child: Icon(Icons.image,
-                                                color: Colors.grey[600]),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item['product']['name'],
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item['product']['name'],
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                ),
                                               ),
+                                              Text(
+                                                '${item['quantity']} x ${_formatCurrency(item['price'])}',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Text(
+                                          _formatCurrency(
+                                              item['price'] * item['quantity']),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  )),
+                              const Divider(height: 30),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Subtotal',
+                                      style:
+                                          TextStyle(color: Colors.grey[600])),
+                                  Text(_formatCurrency(subtotal)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('Pajak (11%)',
+                                      style:
+                                          TextStyle(color: Colors.grey[600])),
+                                  Text(_formatCurrency(tax)),
+                                ],
+                              ),
+                              const Divider(height: 20),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Total',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[800],
+                                    ),
+                                  ),
+                                  Text(
+                                    _formatCurrency(total),
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.orange[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Payment Method Selection
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.payment,
+                                      color: Colors.orange[600]),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Metode Pembayaran',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[800],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              if (storePaymentMethods.isEmpty)
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      children: [
+                                        Icon(Icons.payment_outlined,
+                                            size: 48, color: Colors.grey[400]),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Tidak ada metode pembayaran tersedia',
+                                          style: TextStyle(
+                                              color: Colors.grey[600]),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                ...storePaymentMethods.map((method) {
+                                  final isSelected =
+                                      selectedPaymentMethod?['id'] ==
+                                          method['id'];
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          selectedPaymentMethod = method;
+                                        });
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? Colors.orange[600]!
+                                                : Colors.grey[300]!,
+                                            width: 2,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          color: isSelected
+                                              ? Colors.orange[50]
+                                              : Colors.white,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 20,
+                                              height: 20,
+                                              decoration: BoxDecoration(
+                                                shape: BoxShape.circle,
+                                                color: isSelected
+                                                    ? Colors.orange[600]
+                                                    : Colors.grey[300],
+                                              ),
+                                              child: isSelected
+                                                  ? const Icon(Icons.check,
+                                                      color: Colors.white,
+                                                      size: 14)
+                                                  : null,
                                             ),
-                                            Text(
-                                              '${item['quantity']} x ${_formatCurrency(item['price'])}',
-                                              style: TextStyle(
-                                                color: Colors.grey[600],
-                                                fontSize: 12,
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    method['payment_methods']
+                                                            ['name'] ??
+                                                        'Unknown',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  if (method['payment_methods']
+                                                          ['description'] !=
+                                                      null)
+                                                    Text(
+                                                      method['payment_methods']
+                                                          ['description'],
+                                                      style: TextStyle(
+                                                        color: Colors.grey[600],
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                ],
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      Text(
-                                        _formatCurrency(
-                                            item['price'] * item['quantity']),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )),
-                            const Divider(height: 30),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Subtotal',
-                                    style: TextStyle(color: Colors.grey[600])),
-                                Text(_formatCurrency(subtotal)),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text('Pajak (11%)',
-                                    style: TextStyle(color: Colors.grey[600])),
-                                Text(_formatCurrency(tax)),
-                              ],
-                            ),
-                            const Divider(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Total',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[800],
-                                  ),
-                                ),
-                                Text(
-                                  _formatCurrency(total),
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.orange[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                    ),
+                                  );
+                                }),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 32),
 
-                    // Payment Method Selection
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(Icons.payment, color: Colors.orange[600]),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Metode Pembayaran',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[800],
+                      // Process Payment Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isProcessing ? null : _processPayment,
+                          child: isProcessing
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                            if (storePaymentMethods.isEmpty)
-                              Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20),
-                                  child: Column(
-                                    children: [
-                                      Icon(Icons.payment_outlined,
-                                          size: 48, color: Colors.grey[400]),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        'Tidak ada metode pembayaran tersedia',
-                                        style:
-                                            TextStyle(color: Colors.grey[600]),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            else
-                              ...storePaymentMethods.map((method) {
-                                final isSelected =
-                                    selectedPaymentMethod?['id'] ==
-                                        method['id'];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 12),
-                                  child: InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        selectedPaymentMethod = method;
-                                      });
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: isSelected
-                                              ? Colors.orange[600]!
-                                              : Colors.grey[300]!,
-                                          width: 2,
-                                        ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        color: isSelected
-                                            ? Colors.orange[50]
-                                            : Colors.white,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 20,
-                                            height: 20,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: isSelected
-                                                  ? Colors.orange[600]
-                                                  : Colors.grey[300],
-                                            ),
-                                            child: isSelected
-                                                ? const Icon(Icons.check,
-                                                    color: Colors.white,
-                                                    size: 14)
-                                                : null,
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  method['payment_methods']
-                                                          ['name'] ??
-                                                      'Unknown',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                                if (method['payment_methods']
-                                                        ['description'] !=
-                                                    null)
-                                                  Text(
-                                                    method['payment_methods']
-                                                        ['description'],
-                                                    style: TextStyle(
-                                                      color: Colors.grey[600],
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(Icons.payment,
+                                        color: Colors.white),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Bayar ${_formatCurrency(total)}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
                                     ),
-                                  ),
-                                );
-                              }),
-                          ],
+                                  ],
+                                ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 32),
-
-                    // Process Payment Button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isProcessing ? null : _processPayment,
-                        child: isProcessing
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.payment,
-                                      color: Colors.white),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Bayar ${_formatCurrency(total)}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }
