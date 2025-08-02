@@ -59,6 +59,7 @@ class AllnimallTextInput extends StatefulWidget {
   final FormValidationMode? showErrors;
   final String? Function(String?)? validator;
   final void Function(String?)? onChanged;
+  final void Function(String?)? onSubmitted;
   final void Function(bool)? onFocusChange;
   final TextEditingController? controller;
   final FocusNode? focusNode;
@@ -77,6 +78,7 @@ class AllnimallTextInput extends StatefulWidget {
     this.showErrors,
     this.validator,
     this.onChanged,
+    this.onSubmitted,
     this.onFocusChange,
     this.controller,
     this.focusNode,
@@ -162,6 +164,7 @@ class _AllnimallTextInputState extends State<AllnimallTextInput>
               obscureText: widget.obscureText,
               features: widget.features ?? [],
               onChanged: widget.onChanged,
+              onSubmitted: widget.onSubmitted,
               controller: widget.controller,
               focusNode: _focusNode,
             ).constrained(
@@ -212,6 +215,7 @@ class AllnimallFormField extends StatelessWidget {
   final Set<FormValidationMode>? showErrors;
   final Validator<String>? validator;
   final void Function(String?)? onChanged;
+  final void Function(String?)? onSubmitted;
   final TextEditingController? controller;
   final FocusNode? focusNode;
   final double? width;
@@ -229,6 +233,7 @@ class AllnimallFormField extends StatelessWidget {
     this.showErrors,
     this.validator,
     this.onChanged,
+    this.onSubmitted,
     this.controller,
     this.focusNode,
     this.width,
@@ -249,6 +254,7 @@ class AllnimallFormField extends StatelessWidget {
         obscureText: obscureText,
         features: features,
         onChanged: onChanged,
+        onSubmitted: onSubmitted,
         controller: controller,
         focusNode: focusNode,
         width: width,

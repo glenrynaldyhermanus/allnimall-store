@@ -59,7 +59,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Provide more specific error messages
       if (e.toString().contains('User not found')) {
-        throw Exception('Pengguna tidak ditemukan. Silakan periksa nama pengguna Anda.');
+        throw Exception(
+            'Pengguna tidak ditemukan. Silakan periksa nama pengguna Anda.');
       } else if (e.toString().contains('Invalid credentials')) {
         throw Exception('Kata sandi salah. Silakan periksa kata sandi Anda.');
       } else if (e.toString().contains('User has no email configured')) {
@@ -139,11 +140,12 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = _supabaseClient.auth.currentUser;
       if (user == null) return null;
 
-      // Get user data from users table
+      // Get user data from users table using auth_id
       final userResponse = await _supabaseClient
           .from('users')
           .select()
-          .eq('id', user.id)
+          .eq('auth_id', user.id)
+          .eq('is_active', true)
           .single();
 
       return AppUser.fromJson(userResponse);

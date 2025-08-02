@@ -96,29 +96,29 @@ class _SidebarState extends State<Sidebar> {
                 expanded = !expanded;
               });
             },
-            child: const Icon(Icons.menu),
+            child: const Icon(LucideIcons.menu),
           ),
           const NavigationDivider(),
 
           // POS - Point of Sale
-          buildButton('POS', Icons.dashboard, '/pos'),
+          buildButton('POS', LucideIcons.layoutDashboard, '/pos'),
 
           // Management Data
-          buildButton('Management', Icons.inventory_2, '/management'),
+          buildButton('Management', LucideIcons.package, '/management'),
 
           // Organisasi
-          buildButton('Organisasi', Icons.business, '/organization'),
+          buildButton('Organisasi', LucideIcons.building2, '/organization'),
 
           // Laporan
-          buildButton('Laporan', Icons.analytics, '/reports'),
+          buildButton('Laporan', LucideIcons.fileText, '/reports'),
 
           const NavigationDivider(),
 
           // Pengaturan
-          buildButton('Pengaturan', Icons.settings, '/settings'),
+          buildButton('Pengaturan', LucideIcons.settings, '/settings'),
 
           // Bantuan
-          buildButton('Bantuan', Icons.help_outline, '/help'),
+          buildButton('Bantuan', LucideIcons.info, '/help'),
 
           const NavigationDivider(),
 
@@ -127,7 +127,7 @@ class _SidebarState extends State<Sidebar> {
             label: Text('Logout'),
             alignment: Alignment.centerLeft,
             selectedStyle: ButtonStyle.destructiveIcon(),
-            child: Icon(Icons.logout),
+            child: Icon(LucideIcons.logOut),
           ),
         ],
       ),

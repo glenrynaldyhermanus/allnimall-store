@@ -21,6 +21,10 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
   final _usernameKey = const TextFieldKey('username');
   final _passwordKey = const TextFieldKey('password');
 
+  // Text controllers for direct access
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+
   // Animation controllers
   late AnimationController _logoController;
   late AnimationController _formController;
@@ -108,6 +112,8 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
     _logoController.dispose();
     _formController.dispose();
     _fadeController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -257,9 +263,14 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
                                   fieldKey: _usernameKey,
                                   label: 'Username',
                                   placeholder: 'Username',
+                                  controller: _usernameController,
                                   showErrors: const {
                                     FormValidationMode.changed,
                                     FormValidationMode.submitted
+                                  },
+                                  onSubmitted: (value) {
+                                    // Focus to password field when Enter is pressed
+                                    FocusScope.of(context).nextFocus();
                                   },
                                 ),
 
@@ -269,9 +280,39 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
                                   label: 'Password',
                                   placeholder: 'Password',
                                   obscureText: !_isPasswordVisible,
+                                  controller: _passwordController,
                                   showErrors: const {
                                     FormValidationMode.changed,
                                     FormValidationMode.submitted
+                                  },
+                                  onSubmitted: (value) {
+                                    // Trigger login directly when Enter is pressed
+                                    if (!_isLoading &&
+                                        authState is! AuthLoading) {
+                                      // Get values directly from controllers
+                                      final username =
+                                          _usernameController.text.trim();
+                                      final password = _passwordController.text;
+
+                                      if (username.isNotEmpty &&
+                                          password.isNotEmpty) {
+                                        debugPrint(
+                                            '🚀 Starting login process from Enter key...');
+                                        ref
+                                            .read(authProvider.notifier)
+                                            .signIn(username, password);
+                                      } else {
+                                        // Show toast for empty fields
+                                        if (context.mounted) {
+                                          AllnimallToast.warning(
+                                            context: context,
+                                            title: 'Data Tidak Lengkap',
+                                            content:
+                                                'Masukkan username dan password',
+                                          );
+                                        }
+                                      }
+                                    }
                                   },
                                   features: [
                                     InputFeature.trailing(
@@ -348,13 +389,37 @@ class _LoginPanelState extends ConsumerState<LoginPanel>
                                       : null,
                                   isLoading:
                                       _isLoading || authState is AuthLoading,
-                                  child: const Text(
-                                    'Masuk',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Text(
+                                        'Masuk',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.2),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: const Text(
+                                          '↵',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 );
                               },

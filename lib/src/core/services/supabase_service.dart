@@ -129,10 +129,22 @@ class SupabaseService {
       final user = client.auth.currentUser;
       if (user == null) return null;
 
+      // First, get the user from our users table using auth_id
+      final userResponse = await client
+          .from('users')
+          .select('id')
+          .eq('auth_id', user.id)
+          .eq('is_active', true)
+          .single();
+
+      final userId = userResponse['id'];
+
+      // Now query role_assignments using the user ID from our users table
       final response = await client
           .from('role_assignments')
           .select('store_id')
-          .eq('user_id', user.id)
+          .eq('user_id', userId)
+          .eq('is_active', true)
           .limit(1)
           .single();
 
@@ -163,33 +175,46 @@ class SupabaseService {
 
       debugPrint('👤 Current user: ${user.email}');
 
+      // First, get the user from our users table using auth_id
+      final userResponse = await client
+          .from('users')
+          .select('id, name, email, username, auth_id')
+          .eq('auth_id', user.id)
+          .eq('is_active', true)
+          .single();
+
+      final userId = userResponse['id'];
+      debugPrint('👤 Found user in database: $userId');
+
       // Get user data
       final userData = {
-        'id': user.id,
+        'id': userId, // Use user ID from our users table
         'email': user.email,
-        'name': user.userMetadata?['name'],
+        'name': userResponse['name'],
+        'username': userResponse['username'],
         'avatar': user.userMetadata?['avatar_url'],
       };
       await LocalStorageService.saveUserData(userData);
       debugPrint('💾 User data saved to local storage');
 
-      // Get role assignment data
+      // Get role assignment data using user ID from our users table
       debugPrint('🔍 Fetching role assignment data...');
       final roleResponse = await client
           .from('role_assignments')
-          .select('*, businesses(*), stores(*)')
-          .eq('user_id', user.id)
+          .select('*, merchants(*), stores(*)')
+          .eq('user_id', userId)
+          .eq('is_active', true)
           .limit(1)
           .single();
 
       await LocalStorageService.saveRoleAssignmentData(roleResponse);
       debugPrint('💾 Role assignment data saved to local storage');
 
-      // Save business data
-      final businessData = roleResponse['businesses'];
-      if (businessData != null) {
-        await LocalStorageService.saveBusinessData(businessData);
-        debugPrint('💾 Business data saved to local storage');
+      // Save merchant data
+      final merchantData = roleResponse['merchants'];
+      if (merchantData != null) {
+        await LocalStorageService.saveBusinessData(merchantData);
+        debugPrint('💾 Merchant data saved to local storage');
       }
 
       // Save store data

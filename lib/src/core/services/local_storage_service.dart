@@ -6,6 +6,7 @@ class LocalStorageService {
   static const String _businessKey = 'business_data';
   static const String _storeKey = 'store_data';
   static const String _roleAssignmentKey = 'role_assignment_data';
+  static const String _merchantKey = 'merchant_data';
 
   // User data
   static Future<void> saveUserData(Map<String, dynamic> userData) async {
@@ -69,10 +70,61 @@ class LocalStorageService {
     return null;
   }
 
+  // Merchant data (alias for business data)
+  static Future<void> saveMerchantData(
+      Map<String, dynamic> merchantData) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_merchantKey, jsonEncode(merchantData));
+  }
+
+  static Future<Map<String, dynamic>?> getMerchantData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final merchantString = prefs.getString(_merchantKey);
+    if (merchantString != null) {
+      return jsonDecode(merchantString) as Map<String, dynamic>;
+    }
+    return null;
+  }
+
   // Get store ID from local storage
   static Future<String?> getStoreId() async {
     final roleData = await getRoleAssignmentData();
     return roleData?['store_id'];
+  }
+
+  // Get business ID from local storage
+  static Future<String?> getBusinessId() async {
+    final businessData = await getBusinessData();
+    return businessData?['id'];
+  }
+
+  // Get role ID from local storage
+  static Future<String?> getRoleId() async {
+    final roleData = await getRoleAssignmentData();
+    return roleData?['role_id'];
+  }
+
+  // Get all stored data
+  static Future<Map<String, dynamic>> getAllStoredData() async {
+    final userData = await getUserData();
+    final businessData = await getBusinessData();
+    final storeData = await getStoreData();
+    final roleData = await getRoleAssignmentData();
+    final merchantData = await getMerchantData();
+
+    return {
+      'user': userData,
+      'business': businessData,
+      'store': storeData,
+      'role': roleData,
+      'merchant': merchantData,
+    };
+  }
+
+  // Check if user is logged in (has stored data)
+  static Future<bool> isUserLoggedIn() async {
+    final userData = await getUserData();
+    return userData != null;
   }
 
   // Clear all data (for logout)
@@ -82,5 +134,6 @@ class LocalStorageService {
     await prefs.remove(_businessKey);
     await prefs.remove(_storeKey);
     await prefs.remove(_roleAssignmentKey);
+    await prefs.remove(_merchantKey);
   }
 }

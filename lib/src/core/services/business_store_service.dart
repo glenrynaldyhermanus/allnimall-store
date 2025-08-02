@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:allnimall_store/src/core/services/local_storage_service.dart';
+import 'package:flutter/foundation.dart';
 
 class BusinessStoreService {
   final SupabaseClient _supabaseClient;
@@ -14,40 +15,111 @@ class BusinessStoreService {
         throw Exception('User not authenticated');
       }
 
-      // Get user's role assignments with business and store info
+      debugPrint('🔍 Checking role assignments for user: ${user.id}');
+      debugPrint('👤 User email: ${user.email}');
+      debugPrint('👤 User metadata: ${user.userMetadata}');
+
+      // First, get the user from our users table using auth_id
+      final userResponse = await _supabaseClient
+          .from('users')
+          .select('id, name, email, username, auth_id')
+          .eq('auth_id', user.id)
+          .eq('is_active', true)
+          .single();
+
+      final userId = userResponse['id'];
+      debugPrint('👤 Found user in database: $userId');
+
+      // Now check role assignments using the user ID from our users table
+      final roleAssignmentsCheck = await _supabaseClient
+          .from('role_assignments')
+          .select('id, user_id, merchant_id, store_id, role_id, is_active')
+          .eq('user_id', userId)
+          .eq('is_active', true);
+
+      debugPrint('📊 Found ${roleAssignmentsCheck.length} role assignments');
+
+      if (roleAssignmentsCheck.isEmpty) {
+        // Let's also check if there are any role assignments for this user (active or inactive)
+        final allRoleAssignments = await _supabaseClient
+            .from('role_assignments')
+            .select('id, user_id, merchant_id, store_id, role_id, is_active')
+            .eq('user_id', userId);
+
+        debugPrint(
+            '📊 Total role assignments for user (active + inactive): ${allRoleAssignments.length}');
+
+        if (allRoleAssignments.isNotEmpty) {
+          debugPrint('⚠️ User has role assignments but none are active');
+          debugPrint('📋 Role assignments: $allRoleAssignments');
+        }
+
+        throw Exception('User tidak memiliki role assignment');
+      }
+
+      // Get user's role assignments with merchant and store info
       final roleAssignmentsResponse =
           await _supabaseClient.from('role_assignments').select('''
             *,
-            business:businesses(*),
+            merchant:merchants(*),
             store:stores(*),
             role:roles(*)
-          ''').eq('user_id', user.id);
+          ''').eq('user_id', userId).eq('is_active', true);
+
+      debugPrint(
+          '📊 Role assignments response: ${roleAssignmentsResponse.length} items');
 
       if (roleAssignmentsResponse.isEmpty) {
-        throw Exception('No role assignments found for user');
+        throw Exception('User tidak memiliki role assignment aktif');
       }
 
-      // Get the first role assignment (assuming user has one primary assignment)
-      final roleAssignment = roleAssignmentsResponse[0];
+      // Get the first role assignment (assuming one user has one role)
+      final roleAssignment = roleAssignmentsResponse.first;
+      debugPrint('📋 Role assignment data: $roleAssignment');
 
-      // Extract business and store data
-      final businessData = roleAssignment['business'] as Map<String, dynamic>;
-      final storeData = roleAssignment['store'] as Map<String, dynamic>;
-      final roleData = roleAssignment['role'] as Map<String, dynamic>;
+      final merchantData = roleAssignment['merchant'];
+      final storeData = roleAssignment['store'];
+      final roleData = roleAssignment['role'];
+
+      debugPrint('🏪 Merchant data: $merchantData');
+      debugPrint('🏬 Store data: $storeData');
+      debugPrint('👤 Role data: $roleData');
+
+      // Validate merchant data
+      if (merchantData == null) {
+        throw Exception('User tidak terhubung dengan merchant');
+      }
+
+      // Validate store data
+      if (storeData == null) {
+        throw Exception('User tidak terhubung dengan toko');
+      }
+
+      // Validate role data
+      if (roleData == null) {
+        throw Exception('User tidak memiliki role');
+      }
 
       // Save to local storage
-      await LocalStorageService.saveBusinessData(businessData);
+      await LocalStorageService.saveBusinessData(merchantData);
       await LocalStorageService.saveStoreData(storeData);
       await LocalStorageService.saveRoleAssignmentData(roleAssignment);
 
+      // Also save as merchant data (alias for business)
+      await LocalStorageService.saveMerchantData(merchantData);
+
+      debugPrint('✅ Business and store data loaded successfully');
+
       return {
-        'business': businessData,
+        'business': merchantData,
         'store': storeData,
         'role': roleData,
         'roleAssignment': roleAssignment,
       };
     } catch (e) {
-      throw Exception('Failed to get user business and store data');
+      debugPrint('❌ Error in getUserBusinessAndStore: $e');
+      throw Exception(
+          'Failed to get user business and store data: ${e.toString()}');
     }
   }
 
@@ -97,14 +169,24 @@ class BusinessStoreService {
         throw Exception('User not authenticated');
       }
 
-      // Get role assignment for this store
+      // First, get the user from our users table using auth_id
+      final userResponse = await _supabaseClient
+          .from('users')
+          .select('id')
+          .eq('auth_id', user.id)
+          .eq('is_active', true)
+          .single();
+
+      final userId = userResponse['id'];
+
+      // Get role assignment for this store using user ID from our users table
       final roleAssignmentResponse =
           await _supabaseClient.from('role_assignments').select('''
             *,
-            business:businesses(*),
+            merchant:merchants(*),
             store:stores(*),
             role:roles(*)
-          ''').eq('user_id', user.id).eq('store_id', storeId).single();
+          ''').eq('user_id', userId).eq('store_id', storeId).eq('is_active', true).single();
 
       // Save new store data
       await LocalStorageService.saveStoreData(roleAssignmentResponse['store']);
