@@ -71,13 +71,24 @@ class _CashierPageState extends ConsumerState<CashierPage> {
   void initState() {
     super.initState();
     debugPrint('🚀 Debug - initState called');
+
+    // Load header data
     debugPrint('🚀 Debug - About to call _loadHeaderData');
     _loadHeaderData().then((_) {
       debugPrint('🚀 Debug - _loadHeaderData completed in initState');
     }).catchError((e) {
       debugPrint('🚀 Debug - _loadHeaderData failed in initState: $e');
     });
-    _loadProductsData();
+
+    // Load products data with better error handling
+    debugPrint('🚀 Debug - About to call _loadProductsData');
+    _loadProductsData().then((_) {
+      debugPrint('🚀 Debug - _loadProductsData completed in initState');
+    }).catchError((e, stackTrace) {
+      debugPrint('🚀 Debug - _loadProductsData failed in initState: $e');
+      debugPrint('🚀 Debug - Stack trace: $stackTrace');
+    });
+
     debugPrint('🚀 Debug - Data loading methods called');
   }
 
@@ -289,28 +300,95 @@ class _CashierPageState extends ConsumerState<CashierPage> {
   }
 
   Future<void> _loadProductsData() async {
+    debugPrint('🔄 Debug - _loadProductsData started');
     setState(() {
       isLoadingProducts = true;
     });
 
     try {
+      // Check Supabase connection
+      debugPrint('🔍 Debug - Checking Supabase connection');
+      final client = SupabaseService.client;
+      debugPrint('🔍 Debug - Supabase client: $client');
+
+      // Check current user
+      final currentUser = client.auth.currentUser;
+      debugPrint('🔍 Debug - Current user: ${currentUser?.id}');
+      debugPrint('🔍 Debug - Current user email: ${currentUser?.email}');
+
+      // Check if user is authenticated
+      final session = client.auth.currentSession;
+      debugPrint(
+          '🔍 Debug - Current session: ${session?.accessToken != null ? 'Valid' : 'Invalid'}');
+
+      debugPrint('🔄 Debug - Creating management repository');
       final managementRepository =
           ManagementRepositoryImpl(SupabaseService.client);
+
+      // Debug store ID and local storage
+      debugPrint('🔍 Debug - Checking local storage data');
+      final storeId = await LocalStorageService.getStoreId();
+      debugPrint('🔍 Debug - Store ID from local storage: $storeId');
+
+      final roleData = await LocalStorageService.getRoleAssignmentData();
+      debugPrint('🔍 Debug - Role assignment data: $roleData');
+
+      final storeData = await LocalStorageService.getStoreData();
+      debugPrint('🔍 Debug - Store data: $storeData');
+
+      if (storeId == null) {
+        throw Exception('Store ID not found in local storage');
+      }
+
+      debugPrint('🔄 Debug - Creating getAllProductsUseCase');
       final getAllProductsUseCase = GetAllProductsUseCase(managementRepository);
+
+      debugPrint('🔄 Debug - Executing getAllProductsUseCase');
       final productsList = await getAllProductsUseCase.execute();
 
+      debugPrint(
+          '✅ Debug - Products loaded successfully: ${productsList.length} products');
+      debugPrint(
+          '🔍 Debug - Products: ${productsList.map((p) => p.name).toList()}');
+
       setState(() {
-        products = productsList.where((product) => product.isActive).toList();
+        products = productsList;
         isLoadingProducts = false;
       });
-    } catch (e) {
+
+      debugPrint('✅ Debug - _loadProductsData completed successfully');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Debug - _loadProductsData failed: $e');
+      debugPrint('❌ Debug - Stack trace: $stackTrace');
+
       setState(() {
         isLoadingProducts = false;
       });
+
+      // Show error toast
+      showToast(
+        context: context,
+        builder: (context, overlay) {
+          return SurfaceCard(
+            child: Basic(
+              title: const Text('Error'),
+              content: Text('Gagal memuat produk: $e'),
+              trailing: AllnimallButton.ghost(
+                onPressed: () => overlay.close(),
+                child: const Text(
+                  'Tutup',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
+          );
+        },
+      );
     }
   }
 
   void _addToCart(Product product) {
+    debugPrint('🔄 Debug - _addToCart called for product: ${product.name}');
     setState(() {
       final existingItemIndex = cartItems.indexWhere(
         (item) => item.product.id == product.id,
@@ -326,6 +404,8 @@ class _CashierPageState extends ConsumerState<CashierPage> {
           storeId: existingItem.storeId,
           createdAt: existingItem.createdAt,
         );
+        debugPrint(
+            '✅ Debug - Updated existing cart item quantity: ${cartItems[existingItemIndex].quantity}');
       } else {
         // Add new item to cart
         final newCartItem = CartItem(
@@ -336,7 +416,10 @@ class _CashierPageState extends ConsumerState<CashierPage> {
           createdAt: DateTime.now(),
         );
         cartItems.add(newCartItem);
+        debugPrint(
+            '✅ Debug - Added new cart item: ${newCartItem.product.name}');
       }
+      debugPrint('🔍 Debug - Total cart items: ${cartItems.length}');
     });
   }
 
@@ -388,6 +471,11 @@ class _CashierPageState extends ConsumerState<CashierPage> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('🔄 Debug - build called');
+    debugPrint('🔍 Debug - isLoadingProducts: $isLoadingProducts');
+    debugPrint('🔍 Debug - products.length: ${products.length}');
+    debugPrint('🔍 Debug - cartItems.length: ${cartItems.length}');
+
     return AuthGuard(
       child: Scaffold(
         child: Row(
@@ -422,6 +510,8 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                             },
                           ),
                         ),
+                        // Refresh button
+                        const Gap(8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 8),
@@ -491,52 +581,87 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                   Expanded(
                     child: isLoadingProducts
                         ? const ProductLoading()
-                        : GridView.builder(
-                            padding: const EdgeInsets.all(16),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 4,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 1.2,
-                            ),
-                            itemCount: products.length,
-                            itemBuilder: (context, index) {
-                              final product = products[index];
-                              return Card(
-                                padding: const EdgeInsets.all(12),
+                        : products.isEmpty
+                            ? Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      Icons.pets,
-                                      size: 32,
-                                      color: product.stock > 0
-                                          ? Colors.blue[600]
-                                          : Colors.slate[400],
+                                      Icons.inventory_2_outlined,
+                                      size: 64,
+                                      color: Colors.slate[100],
                                     ),
+                                    const SizedBox(height: 16),
+                                    const Text('Tidak ada produk')
+                                        .muted()
+                                        .large(),
                                     const SizedBox(height: 8),
-                                    Text(product.name).semiBold(),
-                                    const SizedBox(height: 4),
-                                    Text('Rp ${product.price.toStringAsFixed(0)}')
+                                    const Text(
+                                            'Belum ada produk yang ditambahkan')
                                         .muted()
                                         .small(),
-                                    const SizedBox(height: 4),
-                                    Text('Stok: ${product.stock}')
-                                        .muted()
-                                        .xSmall(),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 16),
                                     AllnimallButton.primary(
-                                      onPressed: product.stock > 0
-                                          ? () => _addToCart(product)
-                                          : null,
-                                      child: const Text('Tambah'),
-                                    ).constrained(height: 32),
+                                      onPressed: () => _loadProductsData(),
+                                      child: const Text(
+                                        'Muat Ulang',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ).constrained(width: 120, height: 36),
                                   ],
                                 ),
-                              );
-                            },
-                          ),
+                              )
+                            : GridView.builder(
+                                padding: const EdgeInsets.all(16),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 4,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 1.2,
+                                ),
+                                itemCount: products.length,
+                                itemBuilder: (context, index) {
+                                  final product = products[index];
+                                  return Card(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.pets,
+                                          size: 32,
+                                          color: product.stock > 0
+                                              ? Colors.blue[600]
+                                              : Colors.slate[400],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(product.name).semiBold(),
+                                        const SizedBox(height: 4),
+                                        Text('Rp ${product.price.toStringAsFixed(0)}')
+                                            .muted()
+                                            .small(),
+                                        const SizedBox(height: 4),
+                                        Text('Stok: ${product.stock}')
+                                            .muted()
+                                            .xSmall(),
+                                        const SizedBox(height: 8),
+                                        AllnimallButton.primary(
+                                          onPressed: product.stock > 0
+                                              ? () => _addToCart(product)
+                                              : null,
+                                          child: const Text(
+                                            'Tambah',
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                        ).constrained(height: 32),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                   ),
                 ],
               ),
@@ -674,7 +799,10 @@ class _CashierPageState extends ConsumerState<CashierPage> {
                                     // Checkout logic
                                   }
                                 : null,
-                            child: const Text('Bayar'),
+                            child: const Text(
+                              'Bayar',
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ],
                       ),

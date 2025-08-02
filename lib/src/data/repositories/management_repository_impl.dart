@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:allnimall_store/src/data/objects/product.dart';
 import 'package:allnimall_store/src/core/services/local_storage_service.dart';
 import 'management_repository.dart';
+import 'package:flutter/foundation.dart';
 
 class ManagementRepositoryImpl implements ManagementRepository {
   final SupabaseClient _supabaseClient;
@@ -12,20 +13,44 @@ class ManagementRepositoryImpl implements ManagementRepository {
   @override
   Future<List<Product>> getAllProducts() async {
     try {
+      debugPrint('🔄 Debug - getAllProducts started');
+
       final storeId = await LocalStorageService.getStoreId();
+      debugPrint('🔍 Debug - Store ID: $storeId');
+
       if (storeId == null) {
+        debugPrint('❌ Debug - Store ID not found');
         throw Exception('Store ID not found');
       }
 
+      debugPrint('🔄 Debug - Executing Supabase query');
       final response = await _supabaseClient
           .from('products')
           .select('*, categories(name)')
           .eq('store_id', storeId)
           .order('created_at', ascending: false);
 
-      return (response as List).map((json) => Product.fromJson(json)).toList();
+      debugPrint('✅ Debug - Raw response: $response');
+      debugPrint('🔍 Debug - Response type: ${response.runtimeType}');
+      debugPrint('🔍 Debug - Response length: ${response.length}');
+
+      final products = (response as List).map((json) {
+        debugPrint('🔍 Debug - Processing product JSON: $json');
+        try {
+          return Product.fromJson(json);
+        } catch (e) {
+          debugPrint('❌ Debug - Error parsing product: $e');
+          debugPrint('🔍 Debug - Problematic JSON: $json');
+          rethrow;
+        }
+      }).toList();
+
+      debugPrint('✅ Debug - Successfully parsed ${products.length} products');
+      return products;
     } catch (e) {
-      throw Exception('Failed to fetch products');
+      debugPrint('❌ Debug - Error in getAllProducts: $e');
+      debugPrint('🔍 Debug - Error stack trace: ${StackTrace.current}');
+      throw Exception('Failed to fetch products: $e');
     }
   }
 

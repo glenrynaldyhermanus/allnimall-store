@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class Product {
   final String id;
   final String name;
@@ -62,42 +64,62 @@ class Product {
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    return Product(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      code: json['code'],
-      barcode: json['barcode'],
-      purchasePrice: (json['purchase_price'] ?? 0).toDouble(),
-      price: (json['price'] ?? 0).toDouble(),
-      stock: json['stock'] ?? 0,
-      minStock: json['min_stock'] ?? 0,
-      maxStock: json['max_stock'],
-      unit: json['unit'] ?? 'pcs',
-      weightGrams: json['weight_grams'] ?? 0,
-      discountType: json['discount_type'] ?? 1,
-      discountValue: (json['discount_value'] ?? 0).toDouble(),
-      description: json['description'],
-      ingredients: json['ingredients'],
-      usageInstructions: json['usage_instructions'],
-      ageRecommendation: json['age_recommendation'],
-      petSizeRecommendation: json['pet_size_recommendation'],
-      imageUrl: json['picture_url'],
-      isActive: json['is_active'] ?? true,
-      isPrescriptionRequired: json['is_prescription_required'] ?? false,
-      shelfLifeDays: json['shelf_life_days'],
-      storageInstructions: json['storage_instructions'],
-      categoryId: json['category_id'],
-      storeId: json['store_id'] ?? '',
-      expiredDate: json['expired_date'] != null
-          ? DateTime.parse(json['expired_date'])
-          : null,
-      createdAt: DateTime.parse(
-          json['created_at'] ?? DateTime.now().toIso8601String()),
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : null,
-      categoryName: json['categories']?['name'],
-    );
+    debugPrint('🔍 Debug - Product.fromJson called with: $json');
+
+    try {
+      // Handle categories which might be null or have different structure
+      String? categoryName;
+      if (json['categories'] != null) {
+        if (json['categories'] is Map<String, dynamic>) {
+          categoryName = json['categories']['name'];
+        } else if (json['categories'] is String) {
+          categoryName = json['categories'];
+        }
+      }
+
+      debugPrint('🔍 Debug - Category name extracted: $categoryName');
+
+      return Product(
+        id: json['id'] ?? '',
+        name: json['name'] ?? '',
+        code: json['code'],
+        barcode: json['barcode'],
+        purchasePrice: (json['purchase_price'] ?? 0).toDouble(),
+        price: (json['price'] ?? 0).toDouble(),
+        stock: json['stock'] ?? 0,
+        minStock: json['min_stock'] ?? 0,
+        maxStock: json['max_stock'],
+        unit: json['unit'] ?? 'pcs',
+        weightGrams: json['weight_grams'] ?? 0,
+        discountType: json['discount_type'] ?? 1,
+        discountValue: (json['discount_value'] ?? 0).toDouble(),
+        description: json['description'],
+        ingredients: json['ingredients'],
+        usageInstructions: json['usage_instructions'],
+        ageRecommendation: json['age_recommendation'],
+        petSizeRecommendation: json['pet_size_recommendation'],
+        imageUrl: json['picture_url'],
+        isActive: json['is_active'] ?? true,
+        isPrescriptionRequired: json['is_prescription_required'] ?? false,
+        shelfLifeDays: json['shelf_life_days'],
+        storageInstructions: json['storage_instructions'],
+        categoryId: json['category_id'],
+        storeId: json['store_id'] ?? '',
+        expiredDate: json['expired_date'] != null
+            ? DateTime.parse(json['expired_date'])
+            : null,
+        createdAt: DateTime.parse(
+            json['created_at'] ?? DateTime.now().toIso8601String()),
+        updatedAt: json['updated_at'] != null
+            ? DateTime.parse(json['updated_at'])
+            : null,
+        categoryName: categoryName,
+      );
+    } catch (e) {
+      debugPrint('❌ Debug - Error in Product.fromJson: $e');
+      debugPrint('🔍 Debug - Problematic JSON: $json');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
