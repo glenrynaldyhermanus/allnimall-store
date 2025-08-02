@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Ourbit POS Deploy Script
+# Allnimall Store Deploy Script
 # Script untuk deploy aplikasi Flutter web ke Firebase Hosting
 
 set -e  # Exit on any error
@@ -61,16 +61,16 @@ else
 fi
 
 print_status "Deploying to Firebase Hosting..."
-firebase deploy --only hosting:ourbit-cashier
+firebase deploy --only hosting:allnimall-store
 
 if [ $? -eq 0 ]; then
     print_success "Deployment completed successfully!"
     echo ""
     echo "🌐 Your app is now live at:"
-    echo "   https://ourbit-cashier.web.app"
+    echo "   https://allnimall-store.web.app"
     echo ""
     echo "📊 Firebase Console:"
-    echo "   https://console.firebase.google.com/project/ourbit-9ac6d/overview"
+    echo "   https://console.firebase.google.com/project/allnimall-store/overview"
     echo ""
     print_status "Testing deployment..."
     
@@ -78,7 +78,7 @@ if [ $? -eq 0 ]; then
     sleep 5
     
     # Test if the site is accessible (basic check)
-    if curl -s -o /dev/null -w "%{http_code}" https://ourbit-cashier.web.app | grep -q "200"; then
+    if curl -s -o /dev/null -w "%{http_code}" https://allnimall-store.web.app | grep -q "200"; then
         print_success "Site is accessible!"
     else
         print_warning "Site might still be deploying. Please check manually in a few minutes."
@@ -92,7 +92,7 @@ echo ""
 print_success "🎉 Deployment process completed!"
 echo ""
 echo "📝 Next steps:"
-echo "   1. Test the application at https://ourbit-cashier.web.app"
+echo "   1. Test the application at https://allnimall-store.web.app"
 echo "   2. Update your Next.js CMS with the new URL"
 echo "   3. Test the token integration"
 echo "" 

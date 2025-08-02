@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'local_storage_service.dart';
+import 'package:flutter/foundation.dart';
 
 class SupabaseService {
   static SupabaseClient get client => Supabase.instance.client;
@@ -153,23 +154,27 @@ class SupabaseService {
   // Load and cache user data after successful login
   static Future<void> loadUserDataAfterLogin() async {
     try {
+      debugPrint('📊 Loading user data after login...');
       final user = client.auth.currentUser;
       if (user == null) {
-        // No current user found
+        debugPrint('❌ No current user found during data loading');
         return;
       }
+
+      debugPrint('👤 Current user: ${user.email}');
 
       // Get user data
       final userData = {
         'id': user.id,
         'email': user.email,
         'name': user.userMetadata?['name'],
-        'avatar': user.userMetadata?['avatar'],
+        'avatar': user.userMetadata?['avatar_url'],
       };
       await LocalStorageService.saveUserData(userData);
-      // User data saved to local storage
+      debugPrint('💾 User data saved to local storage');
 
       // Get role assignment data
+      debugPrint('🔍 Fetching role assignment data...');
       final roleResponse = await client
           .from('role_assignments')
           .select('*, businesses(*), stores(*)')
@@ -178,23 +183,25 @@ class SupabaseService {
           .single();
 
       await LocalStorageService.saveRoleAssignmentData(roleResponse);
-      // Role assignment data saved to local storage
+      debugPrint('💾 Role assignment data saved to local storage');
 
       // Save business data
       final businessData = roleResponse['businesses'];
       if (businessData != null) {
         await LocalStorageService.saveBusinessData(businessData);
-        // Business data saved to local storage
+        debugPrint('💾 Business data saved to local storage');
       }
 
       // Save store data
       final storeData = roleResponse['stores'];
       if (storeData != null) {
         await LocalStorageService.saveStoreData(storeData);
-        // Store data saved to local storage
+        debugPrint('💾 Store data saved to local storage');
       }
+      
+      debugPrint('✅ User data loading completed successfully');
     } catch (e) {
-      // Error in loadUserDataAfterLogin: $e
+      debugPrint('❌ Error in loadUserDataAfterLogin: $e');
       // Don't throw exception here to avoid breaking the login flow
     }
   }

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:ourbit_pos/src/core/services/token_service.dart';
+import 'package:allnimall_store/src/core/services/token_service.dart';
 
 class AppInitializationService {
   /// Initialize aplikasi dan handle token dari URL jika ada
@@ -21,8 +21,13 @@ class AppInitializationService {
         return true;
       }
 
+      // Jika tidak ada valid token, clear semua token yang mungkin invalid
+      await TokenService.clearToken();
       return false;
     } catch (e) {
+      debugPrint('App initialization error: $e');
+      // Jika ada error, clear token dan return false
+      await TokenService.clearToken();
       return false;
     }
   }

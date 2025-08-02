@@ -1,4 +1,4 @@
-import 'package:ourbit_pos/src/data/repositories/management_repository.dart';
+import 'package:allnimall_store/src/data/repositories/management_repository.dart';
 
 class GetLoyaltyProgramsUseCase {
   final ManagementRepository _managementRepository;

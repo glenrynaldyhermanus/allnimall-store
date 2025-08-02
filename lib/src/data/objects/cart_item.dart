@@ -21,7 +21,8 @@ class CartItem {
       product: Product.fromJson(json['products'] ?? {}),
       quantity: json['quantity'] ?? 1,
       storeId: json['store_id'] ?? '',
-      createdAt: DateTime.parse(json['created_at'] ?? DateTime.now().toIso8601String()),
+      createdAt: DateTime.parse(
+          json['created_at'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -35,5 +36,5 @@ class CartItem {
     };
   }
 
-  double get totalPrice => product.sellingPrice * quantity;
-} 
+  double get totalPrice => product.price * quantity;
+}

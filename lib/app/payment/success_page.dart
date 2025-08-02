@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ourbit_pos/src/widgets/ourbit_button.dart';
-import 'package:ourbit_pos/src/widgets/ourbit_card.dart';
 
 class SuccessPage extends StatefulWidget {
   const SuccessPage({super.key});
@@ -54,7 +52,7 @@ class _SuccessPageState extends State<SuccessPage>
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
-          child: OurbitCard(
+          child: Card(
             child: Padding(
               padding: const EdgeInsets.all(40),
               child: Column(
@@ -127,7 +125,7 @@ class _SuccessPageState extends State<SuccessPage>
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Expanded(
-                          child: OurbitButton(
+                          child: ElevatedButton(
                             onPressed: () => context.go('/pos'),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,

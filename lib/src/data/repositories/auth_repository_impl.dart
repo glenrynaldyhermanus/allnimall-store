@@ -1,8 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ourbit_pos/src/data/objects/user.dart';
-import 'package:ourbit_pos/src/data/repositories/auth_repository.dart';
-import 'package:ourbit_pos/src/core/services/supabase_service.dart';
-import 'package:ourbit_pos/src/core/services/local_storage_service.dart';
+import 'package:allnimall_store/src/data/objects/user.dart';
+import 'package:allnimall_store/src/data/repositories/auth_repository.dart';
+import 'package:allnimall_store/src/core/services/supabase_service.dart';
+import 'package:allnimall_store/src/core/services/local_storage_service.dart';
+import 'package:flutter/foundation.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final SupabaseClient _supabaseClient;
@@ -10,30 +11,66 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl(this._supabaseClient);
 
   @override
-  Future<AppUser?> signIn(String email, String password) async {
+  Future<AppUser?> signIn(String username, String password) async {
     try {
-      final response = await _supabaseClient.auth.signInWithPassword(
+      debugPrint('🔑 Attempting to sign in with username: $username');
+
+      // First, find user by username to get email
+      final userResponse = await _supabaseClient
+          .from('users')
+          .select()
+          .eq('username', username)
+          .eq('is_active', true)
+          .single();
+
+      final email = userResponse['email'];
+      if (email == null || email.isEmpty) {
+        debugPrint('❌ User has no email configured');
+        throw Exception('User has no email configured');
+      }
+
+      debugPrint('📧 Found email for user: $email');
+
+      // Sign in with Supabase using email and password
+      final authResponse = await _supabaseClient.auth.signInWithPassword(
         email: email,
         password: password,
       );
 
-      if (response.user != null) {
-        // Load and cache user data after successful login
-        await SupabaseService.loadUserDataAfterLogin();
-
-        return AppUser(
-          id: response.user!.id,
-          email: response.user!.email ?? '',
-          name: response.user!.userMetadata?['full_name'] ??
-              response.user!.email?.split('@')[0] ??
-              'User',
-          avatar: response.user!.userMetadata?['avatar_url'],
-        );
+      if (authResponse.user == null) {
+        debugPrint('❌ Supabase authentication failed');
+        throw Exception('Invalid credentials');
       }
 
-      return null;
+      debugPrint('✅ Supabase authentication successful');
+
+      // Update user's auth_id in database
+      await _supabaseClient.from('users').update(
+          {'auth_id': authResponse.user!.id}).eq('id', userResponse['id']);
+
+      debugPrint('✅ User authenticated successfully: ${userResponse['name']}');
+
+      // Load and cache user data after successful login
+      await SupabaseService.loadUserDataAfterLogin();
+
+      return AppUser.fromJson(userResponse);
     } catch (e) {
-      throw Exception('Failed to sign in: ${e.toString()}');
+      debugPrint('❌ Sign in error: $e');
+
+      // Provide more specific error messages
+      if (e.toString().contains('User not found')) {
+        throw Exception('Pengguna tidak ditemukan. Silakan periksa nama pengguna Anda.');
+      } else if (e.toString().contains('Invalid credentials')) {
+        throw Exception('Kata sandi salah. Silakan periksa kata sandi Anda.');
+      } else if (e.toString().contains('User has no email configured')) {
+        throw Exception(
+            'Akun pengguna tidak dikonfigurasi dengan benar. Silakan hubungi administrator.');
+      } else if (e.toString().contains('inactive')) {
+        throw Exception(
+            'Akun Anda tidak aktif. Silakan hubungi administrator.');
+      } else {
+        throw Exception('Gagal masuk: ${e.toString()}');
+      }
     }
   }
 
@@ -47,24 +84,19 @@ class AuthRepositoryImpl implements AuthRepository {
       await _supabaseClient.auth.signOut();
     } catch (e) {
       // TODO: gunakan logger jika perlu
-      throw Exception('Failed to sign out');
+      throw Exception('Gagal keluar');
     }
   }
 
   @override
   Future<AppUser?> getCurrentUser() async {
     try {
-      final user = _supabaseClient.auth.currentUser;
-      if (user == null) return null;
+      // For now, we'll get user from local storage
+      // In a real app, you'd validate the session with Supabase
+      final userData = await LocalStorageService.getUserData();
+      if (userData == null) return null;
 
-      return AppUser(
-        id: user.id,
-        email: user.email ?? '',
-        name: user.userMetadata?['full_name'] ??
-            user.email?.split('@')[0] ??
-            'User',
-        avatar: user.userMetadata?['avatar_url'],
-      );
+      return AppUser.fromJson(userData);
     } catch (e) {
       // TODO: gunakan logger jika perlu
       return null;
@@ -74,8 +106,8 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<bool> isAuthenticated() async {
     try {
-      final user = _supabaseClient.auth.currentUser;
-      return user != null;
+      final userData = await LocalStorageService.getUserData();
+      return userData != null;
     } catch (e) {
       // TODO: gunakan logger jika perlu
       return false;
@@ -107,14 +139,14 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = _supabaseClient.auth.currentUser;
       if (user == null) return null;
 
-      return AppUser(
-        id: user.id,
-        email: user.email ?? '',
-        name: user.userMetadata?['full_name'] ??
-            user.email?.split('@')[0] ??
-            'User',
-        avatar: user.userMetadata?['avatar_url'],
-      );
+      // Get user data from users table
+      final userResponse = await _supabaseClient
+          .from('users')
+          .select()
+          .eq('id', user.id)
+          .single();
+
+      return AppUser.fromJson(userResponse);
     } catch (e) {
       return null;
     }

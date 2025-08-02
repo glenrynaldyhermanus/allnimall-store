@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ourbit_pos/blocs/cashier_bloc.dart';
-import 'package:ourbit_pos/blocs/cashier_state.dart';
-import 'package:ourbit_pos/src/core/services/supabase_service.dart';
-import 'package:ourbit_pos/src/widgets/ourbit_button.dart';
-import 'package:ourbit_pos/src/widgets/ourbit_card.dart';
+import 'package:allnimall_store/src/providers/cashier_provider.dart';
+import 'package:allnimall_store/src/core/services/supabase_service.dart';
 
-class PaymentPage extends StatefulWidget {
+class PaymentPage extends ConsumerStatefulWidget {
   const PaymentPage({super.key});
 
   @override
-  State<PaymentPage> createState() => _PaymentPageState();
+  ConsumerState<PaymentPage> createState() => _PaymentPageState();
 }
 
-class _PaymentPageState extends State<PaymentPage>
+class _PaymentPageState extends ConsumerState<PaymentPage>
     with TickerProviderStateMixin {
   List<Map<String, dynamic>> cartItems = [];
   List<Map<String, dynamic>> paymentTypes = [];
@@ -50,17 +47,17 @@ class _PaymentPageState extends State<PaymentPage>
       // === Loading Payment Data ===
 
       // Load cart items
-      final cashierState = context.read<CashierBloc>().state;
+      final cashierState = ref.read(cashierProvider);
       // CashierState type: ${cashierState.runtimeType}
 
-      if (cashierState is CashierLoaded) {
+      if (cashierState is CashierLoaded && cashierState.cartItems.isNotEmpty) {
         // Cart items count: ${cashierState.cartItems.length}
         cartItems = cashierState.cartItems
             .map((item) => {
                   'id': item.id,
                   'product_id': item.product.id,
                   'quantity': item.quantity,
-                  'price': item.product.sellingPrice,
+                  'price': item.product.price,
                   'product': {
                     'name': item.product.name,
                     'image_url': item.product.imageUrl,
@@ -69,8 +66,7 @@ class _PaymentPageState extends State<PaymentPage>
             .toList();
         // Processed cart items: ${cartItems.length}
       } else {
-        // CashierState is not CashierLoaded: ${cashierState.runtimeType}
-        // Fallback: try to load cart from database directly
+        // CashierState is not loaded or empty, try to load cart from database directly
         final storeId = await SupabaseService.getStoreId();
         if (storeId != null) {
           final cartResponse = await SupabaseService.client
@@ -337,7 +333,7 @@ class _PaymentPageState extends State<PaymentPage>
                         ),
                       ),
                     // Order Summary Section
-                    OurbitCard(
+                    Card(
                       child: Padding(
                         padding: const EdgeInsets.all(20),
                         child: Column(
@@ -465,7 +461,7 @@ class _PaymentPageState extends State<PaymentPage>
                     const SizedBox(height: 24),
 
                     // Payment Method Selection
-                    OurbitCard(
+                    Card(
                       child: Padding(
                         padding: const EdgeInsets.all(20),
                         child: Column(
@@ -591,7 +587,7 @@ class _PaymentPageState extends State<PaymentPage>
                     // Process Payment Button
                     SizedBox(
                       width: double.infinity,
-                      child: OurbitButton(
+                      child: ElevatedButton(
                         onPressed: isProcessing ? null : _processPayment,
                         child: isProcessing
                             ? const SizedBox(

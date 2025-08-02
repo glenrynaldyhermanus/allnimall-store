@@ -1,5 +1,5 @@
-import 'package:ourbit_pos/src/data/objects/product.dart';
-import 'package:ourbit_pos/src/data/objects/cart_item.dart';
+import 'package:allnimall_store/src/data/objects/product.dart';
+import 'package:allnimall_store/src/data/objects/cart_item.dart';
 
 abstract class PosRepository {
   Future<List<Product>> getProducts();

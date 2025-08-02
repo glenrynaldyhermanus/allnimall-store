@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ourbit_pos/src/core/theme/app_theme.dart';
-import 'package:ourbit_pos/blocs/auth_bloc.dart';
-import 'package:ourbit_pos/blocs/auth_event.dart';
-import 'package:ourbit_pos/blocs/auth_state.dart';
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
+import 'package:allnimall_store/src/providers/auth_provider.dart';
 
-class PosHeader extends StatelessWidget implements PreferredSizeWidget {
+class PosHeader extends ConsumerWidget implements PreferredSizeWidget {
   final String businessName;
   final String storeName;
   final String cashierName;
@@ -20,8 +18,24 @@ class PosHeader extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authProvider);
+
+    // Listen to auth state changes
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next is Unauthenticated) {
+        // Navigate to login when logged out
+        context.go('/login');
+      } else if (next is AuthError) {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Logout error: ${next.message}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    });
 
     return AppBar(
       toolbarHeight: 80,
@@ -46,13 +60,11 @@ class PosHeader extends StatelessWidget implements PreferredSizeWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Ourbit POS',
+                  'Allnimall Store',
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
-                    color: isDark
-                        ? AppColors.darkPrimaryText
-                        : AppColors.primaryText,
+                    color: AppColors.primaryText,
                   ),
                 ),
                 if (businessName.isNotEmpty || storeName.isNotEmpty)
@@ -61,9 +73,7 @@ class PosHeader extends StatelessWidget implements PreferredSizeWidget {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
-                      color: isDark
-                          ? AppColors.darkSecondaryText
-                          : AppColors.secondaryText,
+                      color: AppColors.secondaryText,
                     ),
                   ),
                 if (cashierName.isNotEmpty)
@@ -71,9 +81,7 @@ class PosHeader extends StatelessWidget implements PreferredSizeWidget {
                     'Cashier: $cashierName',
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: isDark
-                          ? AppColors.darkSecondaryText
-                          : AppColors.secondaryText,
+                      color: AppColors.secondaryText,
                     ),
                   ),
               ],
@@ -81,108 +89,78 @@ class PosHeader extends StatelessWidget implements PreferredSizeWidget {
           ),
         ],
       ),
-      backgroundColor: isDark
-          ? AppColors.darkPrimaryBackground
-          : AppColors.primaryBackground,
+      backgroundColor: AppColors.primaryBackground,
       elevation: 0,
       actions: [
         Container(
           margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.darkTertiary : AppColors.tertiary,
+            color: AppColors.tertiary,
             borderRadius: BorderRadius.circular(8),
           ),
           child: IconButton(
-            icon: Icon(
+            icon: const Icon(
               Icons.inventory_2_outlined,
-              color: isDark
-                  ? AppColors.darkSecondaryText
-                  : AppColors.secondaryText,
+              color: AppColors.secondaryText,
             ),
             onPressed: () => context.go('/products'),
           ),
         ),
-        BlocListener<AuthBloc, AuthState>(
-          listener: (context, state) {
-            if (state is Unauthenticated) {
-              // Navigate to login when logged out
-              context.go('/login');
-            } else if (state is AuthError) {
-              // Show error message
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Logout error: ${state.message}'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
-            }
-          },
-          child: Container(
-            margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
-            decoration: BoxDecoration(
-              color: isDark ? AppColors.darkTertiary : AppColors.tertiary,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                return IconButton(
-                  icon: state is AuthLoading
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: isDark
-                                ? AppColors.darkSecondaryText
-                                : AppColors.secondaryText,
-                          ),
-                        )
-                      : Icon(
-                          Icons.logout,
-                          color: isDark
-                              ? AppColors.darkSecondaryText
-                              : AppColors.secondaryText,
-                        ),
-                  onPressed: state is AuthLoading
-                      ? null
-                      : () {
-                          // Show confirmation dialog
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext dialogContext) {
-                              return AlertDialog(
-                                title: const Text('Konfirmasi Logout'),
-                                content: const Text(
-                                    'Apakah Anda yakin ingin logout?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(dialogContext).pop();
-                                    },
-                                    child: const Text('Batal'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.of(dialogContext).pop();
-                                      // Trigger logout
-                                      context
-                                          .read<AuthBloc>()
-                                          .add(SignOutRequested());
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.error,
-                                      foregroundColor: Colors.white,
-                                    ),
-                                    child: const Text('Logout'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                );
-              },
-            ),
+        Container(
+          margin: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+          decoration: BoxDecoration(
+            color: AppColors.tertiary,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: IconButton(
+            icon: authState is AuthLoading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.secondaryText,
+                    ),
+                  )
+                : const Icon(
+                    Icons.logout,
+                    color: AppColors.secondaryText,
+                  ),
+            onPressed: authState is AuthLoading
+                ? null
+                : () {
+                    // Show confirmation dialog
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext dialogContext) {
+                        return AlertDialog(
+                          title: const Text('Konfirmasi Logout'),
+                          content: const Text(
+                              'Apakah Anda yakin ingin logout?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                              },
+                              child: const Text('Batal'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(dialogContext).pop();
+                                // Trigger logout
+                                ref.read(authProvider.notifier).signOut();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.error,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Logout'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
           ),
         ),
       ],

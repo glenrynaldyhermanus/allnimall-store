@@ -1,4 +1,4 @@
-import 'package:ourbit_pos/src/data/repositories/auth_repository.dart';
+import 'package:allnimall_store/src/data/repositories/auth_repository.dart';
 
 class SignOutUseCase {
   final AuthRepository _authRepository;

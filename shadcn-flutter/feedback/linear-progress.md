@@ -1,0 +1,60 @@
+Indeterminate
+const SizedBox(
+width: 200,
+child: LinearProgressIndicator(),
+)
+
+Determinate
+double value = 0;
+@override
+Widget build(BuildContext context) {
+return Column(
+mainAxisSize: MainAxisSize.min,
+children: [
+SizedBox(
+width: 200,
+child: LinearProgressIndicator(
+value: value,
+),
+),
+const Gap(24),
+Row(
+mainAxisSize: MainAxisSize.min,
+children: [
+PrimaryButton(
+onPressed: () {
+setState(() {
+value = 0;
+});
+},
+child: const Text('Reset'),
+),
+const Gap(24),
+PrimaryButton(
+onPressed: () {
+if (value + 0.1 >= 1) {
+return;
+}
+setState(() {
+value += 0.1;
+});
+},
+child: const Text('Increase'),
+),
+const Gap(24),
+PrimaryButton(
+onPressed: () {
+if (value - 0.1 <= 0) {
+return;
+}
+setState(() {
+value -= 0.1;
+});
+},
+child: const Text('Decrease'),
+),
+],
+)
+],
+);
+}

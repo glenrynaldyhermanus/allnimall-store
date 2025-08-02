@@ -1,5 +1,5 @@
-import 'package:ourbit_pos/src/data/objects/product.dart';
-import 'package:ourbit_pos/src/data/repositories/pos_repository.dart';
+import 'package:allnimall_store/src/data/objects/product.dart';
+import 'package:allnimall_store/src/data/repositories/pos_repository.dart';
 
 class GetProductsUseCase {
   final PosRepository _posRepository;

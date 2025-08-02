@@ -1,5 +1,5 @@
-import 'package:ourbit_pos/src/data/repositories/pos_repository.dart';
-import 'package:ourbit_pos/src/core/services/supabase_service.dart';
+import 'package:allnimall_store/src/data/repositories/pos_repository.dart';
+import 'package:allnimall_store/src/core/services/supabase_service.dart';
 
 class UpdateCartQuantityUseCase {
   final PosRepository _posRepository;

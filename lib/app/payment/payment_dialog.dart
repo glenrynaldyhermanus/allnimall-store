@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:ourbit_pos/src/core/theme/app_theme.dart';
-
-import 'package:ourbit_pos/src/widgets/ourbit_button.dart';
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
 
 class PaymentDialog extends StatefulWidget {
   final double total;
@@ -66,9 +64,6 @@ class _PaymentDialogState extends State<PaymentDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
     return Dialog(
       child: Container(
         width: 500,
@@ -91,9 +86,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
                   style: GoogleFonts.inter(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: isDark
-                        ? AppColors.darkPrimaryText
-                        : AppColors.primaryText,
+                    color: AppColors.primaryText,
                   ),
                 ),
               ],
@@ -118,9 +111,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
                     style: GoogleFonts.inter(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isDark
-                          ? AppColors.darkPrimaryText
-                          : AppColors.primaryText,
+                      color: AppColors.primaryText,
                     ),
                   ),
                   Text(
@@ -142,8 +133,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
               style: GoogleFonts.inter(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color:
-                    isDark ? AppColors.darkPrimaryText : AppColors.primaryText,
+                color: AppColors.primaryText,
               ),
             ),
             const SizedBox(height: 12),
@@ -175,14 +165,11 @@ class _PaymentDialogState extends State<PaymentDialog> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? AppColors.primary.withValues(alpha: 0.1)
-                          : (isDark ? AppColors.darkMuted : AppColors.muted),
+                          : (AppColors.muted),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : (isDark
-                                ? AppColors.darkBorder
-                                : AppColors.border),
+                        color:
+                            isSelected ? AppColors.primary : AppColors.border,
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -209,18 +196,14 @@ class _PaymentDialogState extends State<PaymentDialog> {
                                   fontWeight: FontWeight.w600,
                                   color: isSelected
                                       ? AppColors.primary
-                                      : (isDark
-                                          ? AppColors.darkPrimaryText
-                                          : AppColors.primaryText),
+                                      : AppColors.primaryText,
                                 ),
                               ),
                               Text(
                                 method.description,
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
-                                  color: isDark
-                                      ? AppColors.darkSecondaryText
-                                      : AppColors.secondaryText,
+                                  color: AppColors.secondaryText,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -249,9 +232,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isDark
-                      ? AppColors.darkPrimaryText
-                      : AppColors.primaryText,
+                  color: AppColors.primaryText,
                 ),
               ),
               const SizedBox(height: 8),
@@ -284,19 +265,19 @@ class _PaymentDialogState extends State<PaymentDialog> {
             Row(
               children: [
                 Expanded(
-                  child: OurbitOutlineButton(
-                    text: 'Cancel',
+                  child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: OurbitPrimaryButton(
-                    text: 'Process Payment',
+                  child: ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pop();
                       widget.onProcessPayment();
                     },
+                    child: const Text('Process Payment'),
                   ),
                 ),
               ],

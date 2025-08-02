@@ -1,18 +1,18 @@
-# Ourbit POS
+# Allnimall Store
 
 Aplikasi Point of Sale (POS) yang dibangun dengan Flutter untuk desktop, tablet, dan web. Terintegrasi dengan aplikasi Next.js CMS untuk autentikasi seamless.
 
 ## 🌐 Live Demo
 
-- **Web App**: https://ourbit-cashier.web.app
-- **Firebase Console**: https://console.firebase.google.com/project/ourbit-9ac6d/overview
+- **Web App**: https://allnimall-store.web.app
+- **Firebase Console**: https://console.firebase.google.com/project/allnimall-store/overview
 
 ## 🚀 Fitur Utama
 
 - **Interface Responsif**: Optimized untuk desktop, tablet, dan web
 - **Auto Login dengan Token**: Integrasi seamless dengan Next.js CMS
 - **Sidebar Hide di Web**: Interface yang bersih untuk pengguna web
-- **Theming Konsisten**: Menggunakan design system yang sama dengan CMS Ourbit
+- **Theming Konsisten**: Menggunakan design system yang sama dengan CMS Allnimall
 - **Payment Processing**: Multiple payment methods (Cash, Credit Card, Debit Card, Digital Wallet, Bank Transfer)
 - **Cart Management**: Add/remove items, quantity adjustment, tax calculation
 - **Receipt Printing**: Simulasi printing receipt
@@ -20,7 +20,7 @@ Aplikasi Point of Sale (POS) yang dibangun dengan Flutter untuk desktop, tablet,
 ## Fitur
 
 - **Interface Responsif**: Optimized untuk desktop dan tablet dengan layout landscape
-- **Theming Konsisten**: Menggunakan design system yang sama dengan CMS Ourbit
+- **Theming Konsisten**: Menggunakan design system yang sama dengan CMS Allnimall
 - **Komponen Neumah**: Custom widgets dengan prefix 'Neumah' untuk konsistensi
 - **Payment Processing**: Multiple payment methods (Cash, Credit Card, Debit Card, Digital Wallet, Bank Transfer)
 - **Cart Management**: Add/remove items, quantity adjustment, tax calculation
@@ -34,7 +34,7 @@ Aplikasi Point of Sale (POS) yang dibangun dengan Flutter untuk desktop, tablet,
 - **Supabase**: Backend & Authentication
 - **Firebase Hosting**: Web Deployment
 - **Google Fonts**: Typography (Inter font family)
-- **Custom Theme**: Matching Ourbit CMS design system
+- **Custom Theme**: Matching Allnimall CMS design system
 
 ## 📁 Struktur Project
 
@@ -130,7 +130,7 @@ lib/
 ## 🔐 Demo Credentials
 
 ```
-Email: demo@ourbit.com
+Email: demo@allnimall.com
 Password: demo123
 ```
 
@@ -151,7 +151,7 @@ Aplikasi ini terintegrasi dengan aplikasi Next.js CMS untuk autentikasi seamless
 ### URL Format untuk Integrasi
 
 ```
-https://ourbit-cashier.web.app/?token=YOUR_TOKEN&expiry=2024-01-01T12:00:00.000Z
+https://allnimall-store.web.app/?token=YOUR_TOKEN&expiry=2024-01-01T12:00:00.000Z
 ```
 
 ### Implementasi di Next.js CMS
@@ -163,7 +163,7 @@ const openCashier = async () => {
 	} = await supabase.auth.getSession();
 	const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-	const flutterUrl = `https://ourbit-cashier.web.app/?token=${
+	const flutterUrl = `https://allnimall-store.web.app/?token=${
 		session.access_token
 	}&expiry=${expiry.toISOString()}`;
 	window.open(flutterUrl, "_blank");
@@ -215,7 +215,7 @@ firebase login
 flutter build web
 
 # Deploy to Firebase
-firebase deploy --only hosting:ourbit-cashier
+firebase deploy --only hosting:allnimall-store
 ```
 
 ### Deploy Script
@@ -230,8 +230,8 @@ Kami menyediakan script deploy untuk memudahkan proses:
 ### Manual Deploy Steps
 
 1. **Build aplikasi**: `flutter build web`
-2. **Deploy ke Firebase**: `firebase deploy --only hosting:ourbit-cashier`
-3. **Verifikasi**: Buka https://ourbit-cashier.web.app
+2. **Deploy ke Firebase**: `firebase deploy --only hosting:allnimall-store`
+3. **Verifikasi**: Buka https://allnimall-store.web.app
 
 ## 🔧 Troubleshooting
 
@@ -253,7 +253,7 @@ firebase login
 
 # Check Firebase project
 firebase projects:list
-firebase use ourbit-9ac6d
+firebase use allnimall-store
 ```
 
 ### Token Integration Issues
@@ -296,7 +296,7 @@ firebase use ourbit-9ac6d
 
 ## Design System
 
-Aplikasi ini menggunakan design system yang konsisten dengan Ourbit CMS:
+Aplikasi ini menggunakan design system yang konsisten dengan Allnimall CMS:
 
 - **Typography**: Inter font family
 - **Colors**: Orange primary (#FF5701) dengan grayscale palette

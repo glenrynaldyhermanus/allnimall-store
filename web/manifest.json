@@ -1,6 +1,6 @@
 {
-    "name": "ourbit_pos",
-    "short_name": "ourbit_pos",
+  "name": "allnimall_store",
+  "short_name": "allnimall_store",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

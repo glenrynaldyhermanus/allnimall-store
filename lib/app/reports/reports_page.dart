@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ourbit_pos/src/core/theme/app_theme.dart';
-import 'package:ourbit_pos/src/widgets/app_sidebar.dart';
-import 'package:ourbit_pos/src/widgets/ourbit_card.dart';
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
+import 'package:allnimall_store/src/widgets/app_sidebar.dart';
 
 class ReportsPage extends StatefulWidget {
   const ReportsPage({super.key});
@@ -68,13 +67,9 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       body: Container(
-        color: isDark
-            ? AppColors.darkSurfaceBackground
-            : AppColors.surfaceBackground,
+        color: AppColors.surfaceBackground,
         child: Row(
           children: [
             // Sidebar
@@ -88,14 +83,11 @@ class _ReportsPageState extends State<ReportsPage> {
                     height: 80,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkPrimaryBackground
-                          : AppColors.primaryBackground,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryBackground,
                       border: Border(
                         bottom: BorderSide(
-                          color:
-                              isDark ? AppColors.darkBorder : AppColors.border,
+                          color: AppColors.border,
                           width: 1,
                         ),
                       ),
@@ -131,15 +123,11 @@ class _ReportsPageState extends State<ReportsPage> {
                         // Left Panel - Menu List
                         Container(
                           width: 300,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkPrimaryBackground
-                                : AppColors.primaryBackground,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryBackground,
                             border: Border(
                               right: BorderSide(
-                                color: isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.border,
+                                color: AppColors.border,
                                 width: 1,
                               ),
                             ),
@@ -203,11 +191,7 @@ class _ReportsPageState extends State<ReportsPage> {
                                                   size: 20,
                                                   color: isSelected
                                                       ? AppColors.primary
-                                                      : isDark
-                                                          ? AppColors
-                                                              .darkSecondaryText
-                                                          : AppColors
-                                                              .secondaryText,
+                                                      : AppColors.secondaryText,
                                                 ),
                                                 const SizedBox(width: 12),
                                                 Expanded(
@@ -225,11 +209,8 @@ class _ReportsPageState extends State<ReportsPage> {
                                                           color: isSelected
                                                               ? AppColors
                                                                   .primary
-                                                              : isDark
-                                                                  ? AppColors
-                                                                      .darkPrimaryText
-                                                                  : AppColors
-                                                                      .primaryText,
+                                                              : AppColors
+                                                                  .primaryText,
                                                         ),
                                                       ),
                                                       const SizedBox(height: 2),
@@ -237,11 +218,8 @@ class _ReportsPageState extends State<ReportsPage> {
                                                         item.description,
                                                         style: _getSystemFont(
                                                           fontSize: 12,
-                                                          color: isDark
-                                                              ? AppColors
-                                                                  .darkSecondaryText
-                                                              : AppColors
-                                                                  .secondaryText,
+                                                          color: AppColors
+                                                              .secondaryText,
                                                         ),
                                                       ),
                                                     ],
@@ -263,7 +241,7 @@ class _ReportsPageState extends State<ReportsPage> {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.all(24),
-                            child: _buildContent(isDark),
+                            child: _buildContent(),
                           ),
                         ),
                       ],
@@ -278,15 +256,15 @@ class _ReportsPageState extends State<ReportsPage> {
     );
   }
 
-  Widget _buildContent(bool isDark) {
+  Widget _buildContent() {
     final selectedItem =
         _menuItems.firstWhere((item) => item.id == _selectedMenu);
 
-    return _buildComingSoonContent(isDark, selectedItem);
+    return _buildComingSoonContent(selectedItem);
   }
 
-  Widget _buildComingSoonContent(bool isDark, ReportMenuItem item) {
-    return OurbitCard(
+  Widget _buildComingSoonContent(ReportMenuItem item) {
+    return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -295,9 +273,7 @@ class _ReportsPageState extends State<ReportsPage> {
             Icon(
               item.icon,
               size: 64,
-              color: isDark
-                  ? AppColors.darkSecondaryText
-                  : AppColors.secondaryText,
+              color: AppColors.secondaryText,
             ),
             const SizedBox(height: 16),
             Text(
@@ -312,9 +288,7 @@ class _ReportsPageState extends State<ReportsPage> {
               item.description,
               style: _getSystemFont(
                 fontSize: 14,
-                color: isDark
-                    ? AppColors.darkSecondaryText
-                    : AppColors.secondaryText,
+                color: AppColors.secondaryText,
               ),
               textAlign: TextAlign.center,
             ),

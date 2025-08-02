@@ -1,8 +1,8 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:ourbit_pos/src/data/objects/cart_item.dart';
-import 'package:ourbit_pos/src/data/objects/product.dart';
-import 'package:ourbit_pos/src/core/services/local_storage_service.dart';
+import 'package:allnimall_store/src/data/objects/cart_item.dart';
+import 'package:allnimall_store/src/data/objects/product.dart';
+import 'package:allnimall_store/src/core/services/local_storage_service.dart';
 import 'pos_repository.dart';
 
 class PosRepositoryImpl implements PosRepository {

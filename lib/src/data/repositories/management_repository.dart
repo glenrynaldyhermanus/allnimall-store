@@ -1,4 +1,4 @@
-import 'package:ourbit_pos/src/data/objects/product.dart';
+import 'package:allnimall_store/src/data/objects/product.dart';
 
 abstract class ManagementRepository {
   // Products

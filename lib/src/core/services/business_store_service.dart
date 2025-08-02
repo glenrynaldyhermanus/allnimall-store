@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ourbit_pos/src/core/services/local_storage_service.dart';
+import 'package:allnimall_store/src/core/services/local_storage_service.dart';
 
 class BusinessStoreService {
   final SupabaseClient _supabaseClient;

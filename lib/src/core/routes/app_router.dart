@@ -1,22 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ourbit_pos/app/cashier/cashier_page.dart';
-import 'package:ourbit_pos/app/login/login_page.dart';
-import 'package:ourbit_pos/app/management/management_page.dart';
-import 'package:ourbit_pos/app/organization/organization_page.dart';
-import 'package:ourbit_pos/app/payment/payment_page.dart';
-import 'package:ourbit_pos/app/payment/success_page.dart';
-import 'package:ourbit_pos/app/products/products_page.dart';
-import 'package:ourbit_pos/app/management/products_management_page.dart';
-import 'package:ourbit_pos/app/reports/reports_page.dart';
-import 'package:flutter/foundation.dart';
-import 'package:ourbit_pos/src/core/services/token_service.dart';
-import 'package:ourbit_pos/src/core/services/supabase_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:allnimall_store/app/cashier/cashier_page.dart';
+import 'package:allnimall_store/app/login/login_page.dart';
+import 'package:allnimall_store/app/management/management_page.dart';
+import 'package:allnimall_store/app/organization/organization_page.dart';
+import 'package:allnimall_store/app/payment/payment_page.dart';
+import 'package:allnimall_store/app/payment/success_page.dart';
+
+import 'package:allnimall_store/app/reports/reports_page.dart';
+import 'package:allnimall_store/src/providers/auth_provider.dart';
 
 class AppRouter {
   static const String loginRoute = '/login';
   static const String posRoute = '/pos';
-  static const String productsRoute = '/products';
   static const String managementRoute = '/management';
   static const String organizationRoute = '/organization';
   static const String reportsRoute = '/reports';
@@ -45,50 +42,37 @@ class AppRouter {
   static final GoRouter router = GoRouter(
     initialLocation: '/',
     redirect: (context, state) async {
-      // Check if user is authenticated
-      try {
-        // First, try to handle token from URL if on web
-        if (kIsWeb) {
-          final hasToken = await TokenService.handleTokenFromUrl();
-          if (hasToken) {
-            return posRoute;
-          }
-        }
-
-        // Check if user is authenticated via Supabase
-        final isAuthenticated = await SupabaseService.isUserAuthenticated();
-        if (isAuthenticated) {
-          // If authenticated and on root path, redirect to POS
-          if (state.matchedLocation == '/') {
-            return posRoute;
-          }
-
-          return null; // Allow access to requested route
-        }
-      } catch (e) {
-        // ignore: empty_catches
+      // Skip redirect for login page to avoid infinite loop
+      if (state.matchedLocation == loginRoute) {
+        return null;
       }
 
-      // If not authenticated, redirect to login
+      // Get auth state from provider
+      final container = ProviderScope.containerOf(context);
+      final authState = container.read(authProvider);
+
+      // If user is authenticated, allow access to all routes
+      if (authState is Authenticated) {
+        return null;
+      }
+
+      // If user is not authenticated, redirect to login
+      if (authState is Unauthenticated || authState is AuthInitial) {
+        return loginRoute;
+      }
+
+      // If auth is loading, stay on current page
+      if (authState is AuthLoading) {
+        return null;
+      }
+
+      // Default to login
       return loginRoute;
     },
     routes: [
       GoRoute(
         path: '/',
-        name: 'root',
-        redirect: (context, state) {
-          // Check if there are token parameters
-          final token = state.uri.queryParameters['token'];
-          final expiry = state.uri.queryParameters['expiry'];
-
-          if (token != null && expiry != null) {
-            // Token will be handled by the global redirect above
-            return null;
-          }
-
-          // No token, redirect to login
-          return loginRoute;
-        },
+        redirect: (context, state) => posRoute,
       ),
       GoRoute(
         path: loginRoute,
@@ -106,24 +90,6 @@ class AppRouter {
           context,
           state,
           const CashierPage(),
-        ),
-      ),
-      GoRoute(
-        path: productsRoute,
-        name: 'products',
-        pageBuilder: (context, state) => _buildPageWithFadeTransition(
-          context,
-          state,
-          const ProductsPage(),
-        ),
-      ),
-      GoRoute(
-        path: '/management/products',
-        name: 'management_products',
-        pageBuilder: (context, state) => _buildPageWithFadeTransition(
-          context,
-          state,
-          const ProductsManagementPage(),
         ),
       ),
       GoRoute(

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ourbit_pos/src/core/services/supabase_service.dart';
+import 'package:allnimall_store/src/core/services/supabase_service.dart';
 
 // Conditional import untuk dart:html hanya di web
 import 'token_service_web.dart' if (dart.library.io) 'token_service_stub.dart';
@@ -92,8 +92,25 @@ class TokenService {
 
   /// Validasi token yang tersimpan
   static Future<bool> isTokenValid() async {
-    final token = await getStoredToken();
-    return token != null;
+    try {
+      final token = await getStoredToken();
+      if (token == null) return false;
+
+      // Cek apakah user masih authenticated di Supabase
+      final isAuthenticated = await SupabaseService.isUserAuthenticated();
+      if (!isAuthenticated) {
+        // Jika tidak authenticated, clear token yang invalid
+        await clearToken();
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      // Jika ada error, clear token dan return false
+      debugPrint('Token validation error: $e');
+      await clearToken();
+      return false;
+    }
   }
 
   /// Clear token dari local storage

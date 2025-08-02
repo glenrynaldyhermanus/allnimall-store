@@ -1,5 +1,5 @@
-import 'package:ourbit_pos/src/data/objects/user.dart';
-import 'package:ourbit_pos/src/data/repositories/auth_repository.dart';
+import 'package:allnimall_store/src/data/objects/user.dart';
+import 'package:allnimall_store/src/data/repositories/auth_repository.dart';
 
 class GetCurrentUserUseCase {
   final AuthRepository _authRepository;

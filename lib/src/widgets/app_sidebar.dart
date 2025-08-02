@@ -1,24 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ourbit_pos/src/core/theme/app_theme.dart';
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
 
 class AppSidebar extends StatelessWidget {
   const AppSidebar({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final currentLocation = GoRouterState.of(context).uri.path;
 
     return Container(
       width: 64,
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.darkPrimaryBackground
-            : AppColors.primaryBackground,
+      decoration: const BoxDecoration(
+        color: AppColors.primaryBackground,
         border: Border(
           right: BorderSide(
-            color: isDark ? AppColors.darkBorder : AppColors.border,
+            color: AppColors.border,
             width: 1,
           ),
         ),
@@ -119,8 +116,6 @@ class AppSidebar extends StatelessWidget {
     required String tooltip,
     bool isLogout = false,
   }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Tooltip(
       message: tooltip,
       preferBelow: false,
@@ -151,9 +146,7 @@ class AppSidebar extends StatelessWidget {
                 ? AppColors.primary
                 : isLogout
                     ? Colors.red
-                    : isDark
-                        ? AppColors.darkSecondaryText
-                        : AppColors.secondaryText,
+                    : AppColors.secondaryText,
           ),
         ),
       ),

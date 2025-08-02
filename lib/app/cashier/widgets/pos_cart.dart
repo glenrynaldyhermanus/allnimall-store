@@ -1,8 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:ourbit_pos/blocs/cashier_state.dart';
-import 'package:ourbit_pos/src/core/theme/app_theme.dart';
-import 'package:ourbit_pos/src/widgets/ourbit_button.dart';
-import 'package:ourbit_pos/src/widgets/ourbit_card.dart';
+import 'package:allnimall_store/src/providers/cashier_provider.dart';
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 class PosCart extends StatelessWidget {
   final CashierLoaded state;
@@ -33,17 +31,16 @@ class PosCart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Column(
       children: [
         // Cart Items
         Expanded(
-          child: OurbitCard(
+          child: Card(
             child: Column(
               children: [
                 // Cart Header
-                OurbitCardHeader(
+                Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
                       const Icon(
@@ -51,18 +48,15 @@ class PosCart extends StatelessWidget {
                         color: AppColors.primary,
                         size: 24,
                       ),
-                      const SizedBox(width: 12),
-                      const OurbitCardTitle(
-                        text: 'Cart',
-                      ),
+                      const Gap(12),
+                      const Text('Cart').semiBold(),
                       const Spacer(),
                       if (state.cartItems.isNotEmpty)
                         IconButton(
-                          icon: Icon(
+                          variance: ButtonVariance.ghost,
+                          icon: const Icon(
                             Icons.clear_rounded,
-                            color: isDark
-                                ? AppColors.darkSecondaryText
-                                : AppColors.secondaryText,
+                            color: AppColors.secondaryText,
                           ),
                           onPressed: onClearCart,
                         ),
@@ -72,17 +66,18 @@ class PosCart extends StatelessWidget {
                 // Cart Content
                 Expanded(
                   child: state.cartItems.isEmpty
-                      ? _buildEmptyCart(isDark)
-                      : _buildCartItems(isDark),
+                      ? _buildEmptyCart()
+                      : _buildCartItems(),
                 ),
               ],
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const Gap(16),
         // Totals
-        OurbitCard(
-          child: OurbitCardContent(
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 Row(
@@ -92,9 +87,7 @@ class PosCart extends StatelessWidget {
                       'Subtotal:',
                       style: _getSystemFont(
                         fontSize: 14,
-                        color: isDark
-                            ? AppColors.darkSecondaryText
-                            : AppColors.secondaryText,
+                        color: AppColors.secondaryText,
                       ),
                     ),
                     Text(
@@ -106,7 +99,7 @@ class PosCart extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const Gap(8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -114,9 +107,7 @@ class PosCart extends StatelessWidget {
                       'Tax (10%):',
                       style: _getSystemFont(
                         fontSize: 14,
-                        color: isDark
-                            ? AppColors.darkSecondaryText
-                            : AppColors.secondaryText,
+                        color: AppColors.secondaryText,
                       ),
                     ),
                     Text(
@@ -153,51 +144,46 @@ class PosCart extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        const Gap(16),
         // Payment Button
         SizedBox(
           width: double.infinity,
-          child: OurbitPrimaryButton(
-            text: 'Process Payment',
+          child: PrimaryButton(
             onPressed: state.cartItems.isEmpty ? null : onProcessPayment,
+            child: const Text('Process Payment'),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildEmptyCart(bool isDark) {
-    return OurbitCardContent(
+  Widget _buildEmptyCart() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.shopping_cart_outlined,
               size: 64,
-              color: isDark
-                  ? AppColors.darkSecondaryText
-                  : AppColors.secondaryText,
+              color: AppColors.secondaryText,
             ),
-            const SizedBox(height: 16),
+            const Gap(16),
             Text(
               'Cart is empty',
               style: _getSystemFont(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: isDark
-                    ? AppColors.darkSecondaryText
-                    : AppColors.secondaryText,
+                color: AppColors.secondaryText,
               ),
             ),
-            const SizedBox(height: 8),
+            const Gap(8),
             Text(
               'Add items to get started',
               style: _getSystemFont(
                 fontSize: 14,
-                color: isDark
-                    ? AppColors.darkSecondaryText
-                    : AppColors.secondaryText,
+                color: AppColors.secondaryText,
               ),
             ),
           ],
@@ -206,7 +192,7 @@ class PosCart extends StatelessWidget {
     );
   }
 
-  Widget _buildCartItems(bool isDark) {
+  Widget _buildCartItems() {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: state.cartItems.length,
@@ -216,9 +202,7 @@ class PosCart extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.darkSurfaceBackground
-                : AppColors.surfaceBackground,
+            color: AppColors.surfaceBackground,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -237,7 +221,7 @@ class PosCart extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    _formatCurrency(item.product.sellingPrice),
+                    _formatCurrency(item.product.price),
                     style: _getSystemFont(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
@@ -246,7 +230,7 @@ class PosCart extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const Gap(12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -254,9 +238,7 @@ class PosCart extends StatelessWidget {
                     'Quantity',
                     style: _getSystemFont(
                       fontSize: 12,
-                      color: isDark
-                          ? AppColors.darkSecondaryText
-                          : AppColors.secondaryText,
+                      color: AppColors.secondaryText,
                     ),
                   ),
                   Row(
@@ -267,6 +249,7 @@ class PosCart extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: IconButton(
+                          variance: ButtonVariance.ghost,
                           icon: const Icon(
                             Icons.remove,
                             size: 16,
@@ -292,6 +275,7 @@ class PosCart extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: IconButton(
+                          variance: ButtonVariance.ghost,
                           icon: const Icon(
                             Icons.add,
                             size: 16,

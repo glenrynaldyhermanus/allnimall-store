@@ -1,4 +1,4 @@
-import 'package:ourbit_pos/src/core/services/business_store_service.dart';
+import 'package:allnimall_store/src/core/services/business_store_service.dart';
 
 class GetCurrentBusinessIdUseCase {
   final BusinessStoreService _businessStoreService;

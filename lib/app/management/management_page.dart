@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ourbit_pos/blocs/management_bloc.dart';
-import 'package:ourbit_pos/blocs/management_event.dart';
-import 'package:ourbit_pos/blocs/management_state.dart';
-import 'package:ourbit_pos/src/core/theme/app_theme.dart';
-import 'package:ourbit_pos/src/widgets/app_sidebar.dart';
-import 'package:ourbit_pos/src/widgets/ourbit_card.dart';
+import 'package:allnimall_store/src/providers/management_provider.dart';
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
+import 'package:allnimall_store/src/widgets/app_sidebar.dart';
 
-class ManagementPage extends StatefulWidget {
+class ManagementPage extends ConsumerStatefulWidget {
   final String? selectedMenu;
 
   const ManagementPage({super.key, this.selectedMenu});
 
   @override
-  State<ManagementPage> createState() => _ManagementPageState();
+  ConsumerState<ManagementPage> createState() => _ManagementPageState();
 }
 
-class _ManagementPageState extends State<ManagementPage> {
+class _ManagementPageState extends ConsumerState<ManagementPage> {
   String _selectedMenu = 'products';
 
   final List<ManagementMenuItem> _menuItems = [
@@ -25,7 +22,7 @@ class _ManagementPageState extends State<ManagementPage> {
       id: 'products',
       title: 'Produk',
       icon: Icons.inventory_2_outlined,
-      description: 'Kelola daftar produk',
+      description: 'Kelola daftar produk pet shop',
     ),
     ManagementMenuItem(
       id: 'inventory',
@@ -43,7 +40,13 @@ class _ManagementPageState extends State<ManagementPage> {
       id: 'customers',
       title: 'Pelanggan',
       icon: Icons.people_outline,
-      description: 'Kelola data pelanggan',
+      description: 'Kelola data pemilik hewan',
+    ),
+    ManagementMenuItem(
+      id: 'pets',
+      title: 'Hewan Peliharaan',
+      icon: Icons.pets,
+      description: 'Kelola data hewan peliharaan',
     ),
     ManagementMenuItem(
       id: 'suppliers',
@@ -105,38 +108,34 @@ class _ManagementPageState extends State<ManagementPage> {
   void _loadDataForSelectedMenu() {
     switch (_selectedMenu) {
       case 'inventory':
-        context.read<ManagementBloc>().add(LoadInventory());
+        ref.read(managementProvider.notifier).loadInventory();
         break;
       case 'categories':
-        context.read<ManagementBloc>().add(LoadCategories());
+        ref.read(managementProvider.notifier).loadCategories();
         break;
       case 'customers':
-        context.read<ManagementBloc>().add(LoadCustomers());
+        ref.read(managementProvider.notifier).loadCustomers();
         break;
       case 'suppliers':
-        context.read<ManagementBloc>().add(LoadSuppliers());
+        ref.read(managementProvider.notifier).loadSuppliers();
         break;
       case 'discounts':
-        context.read<ManagementBloc>().add(LoadDiscounts());
+        ref.read(managementProvider.notifier).loadDiscounts();
         break;
       case 'expenses':
-        context.read<ManagementBloc>().add(LoadExpenses());
+        ref.read(managementProvider.notifier).loadExpenses();
         break;
       case 'loyalty':
-        context.read<ManagementBloc>().add(LoadLoyaltyPrograms());
+        ref.read(managementProvider.notifier).loadLoyaltyPrograms();
         break;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       body: Container(
-        color: isDark
-            ? AppColors.darkSurfaceBackground
-            : AppColors.surfaceBackground,
+        color: AppColors.surfaceBackground,
         child: Row(
           children: [
             // Sidebar
@@ -150,14 +149,11 @@ class _ManagementPageState extends State<ManagementPage> {
                     height: 80,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkPrimaryBackground
-                          : AppColors.primaryBackground,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryBackground,
                       border: Border(
                         bottom: BorderSide(
-                          color:
-                              isDark ? AppColors.darkBorder : AppColors.border,
+                          color: AppColors.border,
                           width: 1,
                         ),
                       ),
@@ -195,15 +191,11 @@ class _ManagementPageState extends State<ManagementPage> {
                           width: MediaQuery.of(context).size.width < 1200
                               ? 250
                               : 300,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkPrimaryBackground
-                                : AppColors.primaryBackground,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryBackground,
                             border: Border(
                               right: BorderSide(
-                                color: isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.border,
+                                color: AppColors.border,
                                 width: 1,
                               ),
                             ),
@@ -268,11 +260,7 @@ class _ManagementPageState extends State<ManagementPage> {
                                                   size: 20,
                                                   color: isSelected
                                                       ? AppColors.primary
-                                                      : isDark
-                                                          ? AppColors
-                                                              .darkSecondaryText
-                                                          : AppColors
-                                                              .secondaryText,
+                                                      : AppColors.secondaryText,
                                                 ),
                                                 const SizedBox(width: 12),
                                                 Expanded(
@@ -290,11 +278,8 @@ class _ManagementPageState extends State<ManagementPage> {
                                                           color: isSelected
                                                               ? AppColors
                                                                   .primary
-                                                              : isDark
-                                                                  ? AppColors
-                                                                      .darkPrimaryText
-                                                                  : AppColors
-                                                                      .primaryText,
+                                                              : AppColors
+                                                                  .primaryText,
                                                         ),
                                                       ),
                                                       const SizedBox(height: 2),
@@ -302,11 +287,8 @@ class _ManagementPageState extends State<ManagementPage> {
                                                         item.description,
                                                         style: _getSystemFont(
                                                           fontSize: 12,
-                                                          color: isDark
-                                                              ? AppColors
-                                                                  .darkSecondaryText
-                                                              : AppColors
-                                                                  .secondaryText,
+                                                          color: AppColors
+                                                              .secondaryText,
                                                         ),
                                                       ),
                                                     ],
@@ -326,14 +308,9 @@ class _ManagementPageState extends State<ManagementPage> {
                         ),
                         // Right Panel - Content
                         Expanded(
-                          child: SingleChildScrollView(
+                          child: Padding(
                             padding: const EdgeInsets.all(24),
-                            child: Column(
-                              children: [
-                                _buildContent(isDark),
-                                const SizedBox(height: 24), // Bottom padding
-                              ],
-                            ),
+                            child: _buildContent(),
                           ),
                         ),
                       ],
@@ -348,36 +325,49 @@ class _ManagementPageState extends State<ManagementPage> {
     );
   }
 
-  Widget _buildContent(bool isDark) {
+  Widget _buildContent() {
     final selectedItem =
         _menuItems.firstWhere((item) => item.id == _selectedMenu);
 
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildContentByMenu(selectedItem),
+          const SizedBox(height: 24), // Bottom padding
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContentByMenu(ManagementMenuItem selectedItem) {
     switch (_selectedMenu) {
       case 'products':
-        return _buildProductsContent(isDark);
+        return _buildProductsContent();
       case 'inventory':
-        return _buildInventoryContent(isDark);
+        return _buildInventoryContent();
       case 'categories':
-        return _buildCategoriesContent(isDark);
+        return _buildCategoriesContent();
       case 'customers':
-        return _buildCustomersContent(isDark);
+        return _buildCustomersContent();
+      case 'pets':
+        return _buildPetsContent();
       case 'suppliers':
-        return _buildSuppliersContent(isDark);
+        return _buildSuppliersContent();
       case 'discounts':
-        return _buildDiscountsContent(isDark);
+        return _buildDiscountsContent();
       case 'taxes':
-        return _buildTaxesContent(isDark);
+        return _buildTaxesContent();
       case 'expenses':
-        return _buildExpensesContent(isDark);
+        return _buildExpensesContent();
       case 'loyalty':
-        return _buildLoyaltyContent(isDark);
+        return _buildLoyaltyContent();
       default:
-        return _buildComingSoonContent(isDark, selectedItem);
+        return _buildComingSoonContent(selectedItem);
     }
   }
 
-  Widget _buildProductsContent(bool isDark) {
-    return OurbitCard(
+  Widget _buildProductsContent() {
+    return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -392,7 +382,7 @@ class _ManagementPageState extends State<ManagementPage> {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Kelola Produk',
+                  'Kelola Produk Pet Shop',
                   style: _getSystemFont(
                     fontSize: 20,
                     fontWeight: FontWeight.w600,
@@ -400,24 +390,54 @@ class _ManagementPageState extends State<ManagementPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Kelola daftar produk, harga, stok, dan informasi produk lainnya',
-              style: _getSystemFont(
-                fontSize: 14,
-                color: isDark
-                    ? AppColors.darkSecondaryText
-                    : AppColors.secondaryText,
-              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPetsContent() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.pets,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Kelola Hewan Peliharaan',
+                  style: _getSystemFont(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Add new pet
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Hewan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => context.go('/management/products'),
-              icon: const Icon(Icons.arrow_forward),
-              label: const Text('Buka Halaman Produk'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+            Text(
+              'Fitur ini akan segera hadir untuk mengelola data hewan peliharaan pelanggan.',
+              style: _getSystemFont(
+                fontSize: 14,
+                color: AppColors.secondaryText,
               ),
             ),
           ],
@@ -426,9 +446,11 @@ class _ManagementPageState extends State<ManagementPage> {
     );
   }
 
-  Widget _buildInventoryContent(bool isDark) {
-    return BlocBuilder<ManagementBloc, ManagementState>(
-      builder: (context, state) {
+  Widget _buildInventoryContent() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final state = ref.watch(managementProvider);
+
         if (state is ManagementLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -456,15 +478,13 @@ class _ManagementPageState extends State<ManagementPage> {
                   state.message,
                   style: _getSystemFont(
                     fontSize: 14,
-                    color: isDark
-                        ? AppColors.darkSecondaryText
-                        : AppColors.secondaryText,
+                    color: AppColors.secondaryText,
                   ),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () =>
-                      context.read<ManagementBloc>().add(LoadInventory()),
+                      ref.read(managementProvider.notifier).loadInventory(),
                   child: const Text('Retry'),
                 ),
               ],
@@ -508,7 +528,7 @@ class _ManagementPageState extends State<ManagementPage> {
               ),
               const SizedBox(height: 24),
               // Search and Filter
-              OurbitCard(
+              Card(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Row(
@@ -550,7 +570,7 @@ class _ManagementPageState extends State<ManagementPage> {
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount:
                         MediaQuery.of(context).size.width < 1200 ? 2 : 3,
-                    childAspectRatio: 2.5,
+                    childAspectRatio: 3.0,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),
@@ -562,11 +582,12 @@ class _ManagementPageState extends State<ManagementPage> {
                     final isLowStock = stock <= minStock;
                     final isOutOfStock = stock == 0;
 
-                    return OurbitCard(
+                    return Card(
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Row(
                               children: [
@@ -603,9 +624,7 @@ class _ManagementPageState extends State<ManagementPage> {
                                         'SKU: ${item.id}',
                                         style: _getSystemFont(
                                           fontSize: 12,
-                                          color: isDark
-                                              ? AppColors.darkSecondaryText
-                                              : AppColors.secondaryText,
+                                          color: AppColors.secondaryText,
                                         ),
                                       ),
                                     ],
@@ -655,9 +674,7 @@ class _ManagementPageState extends State<ManagementPage> {
                                         'Stok',
                                         style: _getSystemFont(
                                           fontSize: 12,
-                                          color: isDark
-                                              ? AppColors.darkSecondaryText
-                                              : AppColors.secondaryText,
+                                          color: AppColors.secondaryText,
                                         ),
                                       ),
                                       Text(
@@ -684,9 +701,7 @@ class _ManagementPageState extends State<ManagementPage> {
                                         'Min. Stok',
                                         style: _getSystemFont(
                                           fontSize: 12,
-                                          color: isDark
-                                              ? AppColors.darkSecondaryText
-                                              : AppColors.secondaryText,
+                                          color: AppColors.secondaryText,
                                         ),
                                       ),
                                       Text(
@@ -741,9 +756,11 @@ class _ManagementPageState extends State<ManagementPage> {
     );
   }
 
-  Widget _buildCategoriesContent(bool isDark) {
-    return BlocBuilder<ManagementBloc, ManagementState>(
-      builder: (context, state) {
+  Widget _buildCategoriesContent() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final state = ref.watch(managementProvider);
+
         if (state is ManagementLoading) {
           return const Center(child: CircularProgressIndicator());
         }
@@ -771,15 +788,13 @@ class _ManagementPageState extends State<ManagementPage> {
                   state.message,
                   style: _getSystemFont(
                     fontSize: 14,
-                    color: isDark
-                        ? AppColors.darkSecondaryText
-                        : AppColors.secondaryText,
+                    color: AppColors.secondaryText,
                   ),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: () =>
-                      context.read<ManagementBloc>().add(LoadCategories()),
+                      ref.read(managementProvider.notifier).loadCategories(),
                   child: const Text('Retry'),
                 ),
               ],
@@ -843,7 +858,7 @@ class _ManagementPageState extends State<ManagementPage> {
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
-                      child: OurbitCard(
+                      child: Card(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Row(
@@ -878,9 +893,7 @@ class _ManagementPageState extends State<ManagementPage> {
                                       '${category['product_count'] ?? 0} produk',
                                       style: _getSystemFont(
                                         fontSize: 14,
-                                        color: isDark
-                                            ? AppColors.darkSecondaryText
-                                            : AppColors.secondaryText,
+                                        color: AppColors.secondaryText,
                                       ),
                                     ),
                                   ],
@@ -922,1528 +935,1541 @@ class _ManagementPageState extends State<ManagementPage> {
     );
   }
 
-  Widget _buildCustomersContent(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        Row(
+  Widget _buildCustomersContent() {
+    return Consumer(
+      builder: (context, ref, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(
-              Icons.people_outline,
-              size: 24,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Kelola Pelanggan',
-              style: _getSystemFont(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Add new customer
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Pelanggan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        // Search and Filter
-        OurbitCard(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
+            // Header
+            Row(
               children: [
-                Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Cari pelanggan...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
+                const Icon(
+                  Icons.people_outline,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Kelola Pelanggan',
+                  style: _getSystemFont(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 16),
-                DropdownButton<String>(
-                  value: 'all',
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('Semua Status')),
-                    DropdownMenuItem(value: 'active', child: Text('Aktif')),
-                    DropdownMenuItem(
-                        value: 'inactive', child: Text('Tidak Aktif')),
-                  ],
-                  onChanged: (value) {
-                    // TODO: Filter customers
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Add new customer
                   },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Pelanggan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
                 ),
               ],
             ),
-          ),
-        ),
-        const SizedBox(height: 16),
-        // Customers Table
-        SizedBox(
-          height: 600, // Fixed height for table
-          child: OurbitCard(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('Nama')),
-                  DataColumn(label: Text('Email')),
-                  DataColumn(label: Text('Telepon')),
-                  DataColumn(label: Text('Alamat')),
-                  DataColumn(label: Text('Status')),
-                  DataColumn(label: Text('Total Transaksi')),
-                  DataColumn(label: Text('Aksi')),
-                ],
-                rows: List.generate(10, (index) {
-                  final isActive = index % 3 != 0;
-                  return DataRow(
-                    cells: [
-                      DataCell(
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor:
-                                  AppColors.primary.withValues(alpha: 0.1),
+            const SizedBox(height: 24),
+            // Search and Filter
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Cari pelanggan...',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    DropdownButton<String>(
+                      value: 'all',
+                      items: const [
+                        DropdownMenuItem(
+                            value: 'all', child: Text('Semua Status')),
+                        DropdownMenuItem(value: 'active', child: Text('Aktif')),
+                        DropdownMenuItem(
+                            value: 'inactive', child: Text('Tidak Aktif')),
+                      ],
+                      onChanged: (value) {
+                        // TODO: Filter customers
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Customers Table
+            SizedBox(
+              height: 600,
+              child: Card(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('Nama')),
+                      DataColumn(label: Text('Email')),
+                      DataColumn(label: Text('Telepon')),
+                      DataColumn(label: Text('Alamat')),
+                      DataColumn(label: Text('Status')),
+                      DataColumn(label: Text('Total Transaksi')),
+                      DataColumn(label: Text('Aksi')),
+                    ],
+                    rows: List.generate(10, (index) {
+                      final isActive = index % 3 != 0;
+                      return DataRow(
+                        cells: [
+                          DataCell(
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor:
+                                      AppColors.primary.withValues(alpha: 0.1),
+                                  child: Text(
+                                    'P${index + 1}',
+                                    style: _getSystemFont(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text('Pelanggan ${index + 1}'),
+                              ],
+                            ),
+                          ),
+                          DataCell(Text('pelanggan${index + 1}@email.com')),
+                          DataCell(Text(
+                              '+62 812-3456-${(index + 1).toString().padLeft(2, '0')}')),
+                          DataCell(
+                              Text('Jl. Contoh No. ${index + 1}, Jakarta')),
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? Colors.green.withValues(alpha: 0.1)
+                                    : Colors.grey.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               child: Text(
-                                'P${index + 1}',
+                                isActive ? 'Aktif' : 'Tidak Aktif',
                                 style: _getSystemFont(
                                   fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w500,
+                                  color: isActive ? Colors.green : Colors.grey,
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Text('Pelanggan ${index + 1}'),
-                          ],
-                        ),
-                      ),
-                      DataCell(Text('pelanggan${index + 1}@email.com')),
-                      DataCell(Text(
-                          '+62 812-3456-${(index + 1).toString().padLeft(2, '0')}')),
-                      DataCell(Text('Jl. Contoh No. ${index + 1}, Jakarta')),
-                      DataCell(
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.grey.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
                           ),
-                          child: Text(
-                            isActive ? 'Aktif' : 'Tidak Aktif',
-                            style: _getSystemFont(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: isActive ? Colors.green : Colors.grey,
-                            ),
-                          ),
-                        ),
-                      ),
-                      DataCell(Text('${(index + 1) * 3}')),
-                      DataCell(
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                // TODO: Edit customer
-                              },
-                              icon: const Icon(Icons.edit, size: 16),
-                              tooltip: 'Edit',
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                // TODO: View customer details
-                              },
-                              icon: const Icon(Icons.visibility, size: 16),
-                              tooltip: 'Lihat Detail',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSuppliersContent(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        Row(
-          children: [
-            const Icon(
-              Icons.local_shipping_outlined,
-              size: 24,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Kelola Supplier',
-              style: _getSystemFont(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Add new supplier
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Supplier'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        // Suppliers Grid
-        SizedBox(
-          height: 600, // Fixed height for grid
-          child: GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: MediaQuery.of(context).size.width < 1200 ? 1 : 2,
-              childAspectRatio: 2.2,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: 8, // Sample data
-            itemBuilder: (context, index) {
-              final suppliers = [
-                {
-                  'name': 'PT Sukses Makmur',
-                  'contact': 'Budi Santoso',
-                  'phone': '+62 812-1111-001',
-                  'email': 'budi@suksesmakmur.com'
-                },
-                {
-                  'name': 'CV Maju Jaya',
-                  'contact': 'Siti Aminah',
-                  'phone': '+62 812-1111-002',
-                  'email': 'siti@majujaya.com'
-                },
-                {
-                  'name': 'UD Berkah Abadi',
-                  'contact': 'Ahmad Rizki',
-                  'phone': '+62 812-1111-003',
-                  'email': 'ahmad@berkahabadi.com'
-                },
-                {
-                  'name': 'PT Sejahtera Bersama',
-                  'contact': 'Dewi Sartika',
-                  'phone': '+62 812-1111-004',
-                  'email': 'dewi@sejahterabersama.com'
-                },
-                {
-                  'name': 'CV Mandiri Jaya',
-                  'contact': 'Rudi Hartono',
-                  'phone': '+62 812-1111-005',
-                  'email': 'rudi@mandirijaya.com'
-                },
-                {
-                  'name': 'PT Indah Permai',
-                  'contact': 'Nina Safitri',
-                  'phone': '+62 812-1111-006',
-                  'email': 'nina@indahpermai.com'
-                },
-                {
-                  'name': 'UD Makmur Sejati',
-                  'contact': 'Eko Prasetyo',
-                  'phone': '+62 812-1111-007',
-                  'email': 'eko@makmursejati.com'
-                },
-                {
-                  'name': 'CV Sukses Mandiri',
-                  'contact': 'Rina Marlina',
-                  'phone': '+62 812-1111-008',
-                  'email': 'rina@suksesmandiri.com'
-                },
-              ];
-
-              final supplier = suppliers[index];
-
-              return OurbitCard(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.business,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          DataCell(Text('${(index + 1) * 3}')),
+                          DataCell(
+                            Row(
                               children: [
-                                Text(
-                                  supplier['name'] as String,
-                                  style: _getSystemFont(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                IconButton(
+                                  onPressed: () {
+                                    // TODO: Edit customer
+                                  },
+                                  icon: const Icon(Icons.edit, size: 16),
+                                  tooltip: 'Edit',
                                 ),
-                                Text(
-                                  'Kontak: ${supplier['contact']}',
-                                  style: _getSystemFont(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppColors.darkSecondaryText
-                                        : AppColors.secondaryText,
-                                  ),
+                                IconButton(
+                                  onPressed: () {
+                                    // TODO: View customer details
+                                  },
+                                  icon: const Icon(Icons.visibility, size: 16),
+                                  tooltip: 'Lihat Detail',
                                 ),
                               ],
                             ),
                           ),
-                          PopupMenuButton<String>(
-                            onSelected: (value) {
-                              // TODO: Handle menu actions
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: 'edit',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.edit, size: 16),
-                                    SizedBox(width: 8),
-                                    Text('Edit'),
-                                  ],
-                                ),
-                              ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.delete, size: 16),
-                                    Text('Hapus'),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            child: const Icon(Icons.more_vert),
-                          ),
                         ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.phone,
-                            size: 14,
-                            color: isDark
-                                ? AppColors.darkSecondaryText
-                                : AppColors.secondaryText,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              supplier['phone'] as String,
-                              style: _getSystemFont(
-                                fontSize: 12,
-                                color: isDark
-                                    ? AppColors.darkSecondaryText
-                                    : AppColors.secondaryText,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.email,
-                            size: 14,
-                            color: isDark
-                                ? AppColors.darkSecondaryText
-                                : AppColors.secondaryText,
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              supplier['email'] as String,
-                              style: _getSystemFont(
-                                fontSize: 12,
-                                color: isDark
-                                    ? AppColors.darkSecondaryText
-                                    : AppColors.secondaryText,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                // TODO: View supplier details
-                              },
-                              child: const Text('Detail'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                // TODO: Contact supplier
-                              },
-                              child: const Text('Kontak'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                      );
+                    }),
                   ),
                 ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDiscountsContent(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        Row(
-          children: [
-            const Icon(
-              Icons.local_offer_outlined,
-              size: 24,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Kelola Diskon & Promo',
-              style: _getSystemFont(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Add new discount
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Diskon'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
               ),
             ),
           ],
-        ),
-        const SizedBox(height: 24),
-        // Discounts List
-        SizedBox(
-          height: 600, // Fixed height for list
-          child: ListView.builder(
-            itemCount: 6, // Sample data
-            itemBuilder: (context, index) {
-              final discounts = [
-                {
-                  'name': 'Diskon 10% Semua Produk',
-                  'type': 'percentage',
-                  'value': 10,
-                  'status': 'active',
-                  'expires': '2024-12-31'
-                },
-                {
-                  'name': 'Potongan Rp 5.000',
-                  'type': 'fixed',
-                  'value': 5000,
-                  'status': 'active',
-                  'expires': '2024-11-30'
-                },
-                {
-                  'name': 'Buy 1 Get 1 Free',
-                  'type': 'bogo',
-                  'value': 0,
-                  'status': 'inactive',
-                  'expires': '2024-10-15'
-                },
-                {
-                  'name': 'Diskon 15% Minuman',
-                  'type': 'percentage',
-                  'value': 15,
-                  'status': 'active',
-                  'expires': '2024-12-15'
-                },
-                {
-                  'name': 'Potongan Rp 10.000 Min. Belanja Rp 100.000',
-                  'type': 'fixed',
-                  'value': 10000,
-                  'status': 'active',
-                  'expires': '2024-11-20'
-                },
-                {
-                  'name': 'Diskon 20% Rokok',
-                  'type': 'percentage',
-                  'value': 20,
-                  'status': 'inactive',
-                  'expires': '2024-09-30'
-                },
-              ];
+        );
+      },
+    );
+  }
 
-              final discount = discounts[index];
-              final isActive = discount['status'] == 'active';
+  Widget _buildSuppliersContent() {
+    return Consumer(
+      builder: (context, ref, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                const Icon(
+                  Icons.local_shipping_outlined,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Kelola Supplier',
+                  style: _getSystemFont(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Add new supplier
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Supplier'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Suppliers Grid
+            SizedBox(
+              height: 600,
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount:
+                      MediaQuery.of(context).size.width < 1200 ? 1 : 2,
+                  childAspectRatio: 2.2,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: 8, // Sample data
+                itemBuilder: (context, index) {
+                  final suppliers = [
+                    {
+                      'name': 'PT Sukses Makmur',
+                      'contact': 'Budi Santoso',
+                      'phone': '+62 812-1111-001',
+                      'email': 'budi@suksesmakmur.com'
+                    },
+                    {
+                      'name': 'CV Maju Jaya',
+                      'contact': 'Siti Aminah',
+                      'phone': '+62 812-1111-002',
+                      'email': 'siti@majujaya.com'
+                    },
+                    {
+                      'name': 'UD Berkah Abadi',
+                      'contact': 'Ahmad Rizki',
+                      'phone': '+62 812-1111-003',
+                      'email': 'ahmad@berkahabadi.com'
+                    },
+                    {
+                      'name': 'PT Sejahtera Bersama',
+                      'contact': 'Dewi Sartika',
+                      'phone': '+62 812-1111-004',
+                      'email': 'dewi@sejahterabersama.com'
+                    },
+                    {
+                      'name': 'CV Mandiri Jaya',
+                      'contact': 'Rudi Hartono',
+                      'phone': '+62 812-1111-005',
+                      'email': 'rudi@mandirijaya.com'
+                    },
+                    {
+                      'name': 'PT Indah Permai',
+                      'contact': 'Nina Safitri',
+                      'phone': '+62 812-1111-006',
+                      'email': 'nina@indahpermai.com'
+                    },
+                    {
+                      'name': 'UD Makmur Sejati',
+                      'contact': 'Eko Prasetyo',
+                      'phone': '+62 812-1111-007',
+                      'email': 'eko@makmursejati.com'
+                    },
+                    {
+                      'name': 'CV Sukses Mandiri',
+                      'contact': 'Rina Marlina',
+                      'phone': '+62 812-1111-008',
+                      'email': 'rina@suksesmandiri.com'
+                    },
+                  ];
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: OurbitCard(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.grey.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Icon(
-                            Icons.local_offer,
-                            color: isActive ? Colors.green : Colors.grey,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                  final supplier = suppliers[index];
+
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
                             children: [
-                              Text(
-                                discount['name'] as String,
-                                style: _getSystemFont(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.business,
+                                  color: AppColors.primary,
+                                  size: 20,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary
-                                          .withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      supplier['name'] as String,
+                                      style: _getSystemFont(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    child: Text(
-                                      discount['type'] == 'percentage'
-                                          ? '${discount['value']}%'
-                                          : discount['type'] == 'fixed'
-                                              ? 'Rp ${discount['value']}'
-                                              : 'BOGO',
+                                    Text(
+                                      'Kontak: ${supplier['contact']}',
                                       style: _getSystemFont(
                                         fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.primary,
+                                        color: AppColors.secondaryText,
                                       ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuButton<String>(
+                                onSelected: (value) {
+                                  // TODO: Handle menu actions
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'edit',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.edit, size: 16),
+                                        SizedBox(width: 8),
+                                        Text('Edit'),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: isActive
-                                          ? Colors.green.withValues(alpha: 0.1)
-                                          : Colors.grey.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(12),
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete, size: 16),
+                                        Text('Hapus'),
+                                      ],
                                     ),
-                                    child: Text(
-                                      isActive ? 'Aktif' : 'Tidak Aktif',
-                                      style: _getSystemFont(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
-                                        color: isActive
-                                            ? Colors.green
-                                            : Colors.grey,
+                                  ),
+                                ],
+                                child: const Icon(Icons.more_vert),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.phone,
+                                size: 14,
+                                color: AppColors.secondaryText,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  supplier['phone'] as String,
+                                  style: _getSystemFont(
+                                    fontSize: 12,
+                                    color: AppColors.secondaryText,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.email,
+                                size: 14,
+                                color: AppColors.secondaryText,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  supplier['email'] as String,
+                                  style: _getSystemFont(
+                                    fontSize: 12,
+                                    color: AppColors.secondaryText,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    // TODO: View supplier details
+                                  },
+                                  child: const Text('Detail'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    // TODO: Contact supplier
+                                  },
+                                  child: const Text('Kontak'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildDiscountsContent() {
+    return Consumer(
+      builder: (context, ref, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                const Icon(
+                  Icons.local_offer_outlined,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Kelola Diskon & Promo',
+                  style: _getSystemFont(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Add new discount
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Diskon'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Discounts List
+            SizedBox(
+              height: 600,
+              child: ListView.builder(
+                itemCount: 6, // Sample data
+                itemBuilder: (context, index) {
+                  final discounts = [
+                    {
+                      'name': 'Diskon 10% Semua Produk',
+                      'type': 'percentage',
+                      'value': 10,
+                      'status': 'active',
+                      'expires': '2024-12-31'
+                    },
+                    {
+                      'name': 'Potongan Rp 5.000',
+                      'type': 'fixed',
+                      'value': 5000,
+                      'status': 'active',
+                      'expires': '2024-11-30'
+                    },
+                    {
+                      'name': 'Buy 1 Get 1 Free',
+                      'type': 'bogo',
+                      'value': 0,
+                      'status': 'inactive',
+                      'expires': '2024-10-15'
+                    },
+                    {
+                      'name': 'Diskon 15% Minuman',
+                      'type': 'percentage',
+                      'value': 15,
+                      'status': 'active',
+                      'expires': '2024-12-15'
+                    },
+                    {
+                      'name': 'Potongan Rp 10.000 Min. Belanja Rp 100.000',
+                      'type': 'fixed',
+                      'value': 10000,
+                      'status': 'active',
+                      'expires': '2024-11-20'
+                    },
+                    {
+                      'name': 'Diskon 20% Rokok',
+                      'type': 'percentage',
+                      'value': 20,
+                      'status': 'inactive',
+                      'expires': '2024-09-30'
+                    },
+                  ];
+
+                  final discount = discounts[index];
+                  final isActive = discount['status'] == 'active';
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? Colors.green.withValues(alpha: 0.1)
+                                    : Colors.grey.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                Icons.local_offer,
+                                color: isActive ? Colors.green : Colors.grey,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    discount['name'] as String,
+                                    style: _getSystemFont(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary
+                                              .withValues(alpha: 0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          discount['type'] == 'percentage'
+                                              ? '${discount['value']}%'
+                                              : discount['type'] == 'fixed'
+                                                  ? 'Rp ${discount['value']}'
+                                                  : 'BOGO',
+                                          style: _getSystemFont(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
                                       ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: isActive
+                                              ? Colors.green
+                                                  .withValues(alpha: 0.1)
+                                              : Colors.grey
+                                                  .withValues(alpha: 0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          isActive ? 'Aktif' : 'Tidak Aktif',
+                                          style: _getSystemFont(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: isActive
+                                                ? Colors.green
+                                                : Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Berlaku sampai: ${discount['expires']}',
+                                    style: _getSystemFont(
+                                      fontSize: 12,
+                                      color: AppColors.secondaryText,
                                     ),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Berlaku sampai: ${discount['expires']}',
-                                style: _getSystemFont(
-                                  fontSize: 12,
-                                  color: isDark
-                                      ? AppColors.darkSecondaryText
-                                      : AppColors.secondaryText,
+                            ),
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    // TODO: Edit discount
+                                  },
+                                  icon: const Icon(Icons.edit),
+                                  tooltip: 'Edit Diskon',
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                // TODO: Edit discount
-                              },
-                              icon: const Icon(Icons.edit),
-                              tooltip: 'Edit Diskon',
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                // TODO: Toggle discount status
-                              },
-                              icon: Icon(
-                                isActive ? Icons.pause : Icons.play_arrow,
-                              ),
-                              tooltip: isActive ? 'Nonaktifkan' : 'Aktifkan',
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                // TODO: Delete discount
-                              },
-                              icon: const Icon(Icons.delete),
-                              tooltip: 'Hapus Diskon',
-                              color: Colors.red,
+                                IconButton(
+                                  onPressed: () {
+                                    // TODO: Toggle discount status
+                                  },
+                                  icon: Icon(
+                                    isActive ? Icons.pause : Icons.play_arrow,
+                                  ),
+                                  tooltip:
+                                      isActive ? 'Nonaktifkan' : 'Aktifkan',
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    // TODO: Delete discount
+                                  },
+                                  icon: const Icon(Icons.delete),
+                                  tooltip: 'Hapus Diskon',
+                                  color: Colors.red,
+                                ),
+                              ],
                             ),
                           ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildTaxesContent() {
+    return Consumer(
+      builder: (context, ref, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                const Icon(
+                  Icons.receipt_long_outlined,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Pengaturan Pajak',
+                  style: _getSystemFont(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Add new tax rule
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Aturan Pajak'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Tax Settings Form
+            SizedBox(
+              height: 600,
+              child: Row(
+                children: [
+                  // Left Panel - Tax Rules
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Aturan Pajak',
+                          style: _getSystemFont(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          height: 400, // Fixed height for tax rules list
+                          child: ListView.builder(
+                            itemCount: 4, // Sample data
+                            itemBuilder: (context, index) {
+                              final taxRules = [
+                                {
+                                  'name': 'PPN 11%',
+                                  'rate': 11.0,
+                                  'type': 'percentage',
+                                  'status': 'active'
+                                },
+                                {
+                                  'name': 'PPh 21',
+                                  'rate': 5.0,
+                                  'type': 'percentage',
+                                  'status': 'active'
+                                },
+                                {
+                                  'name': 'Pajak Rokok',
+                                  'rate': 15.0,
+                                  'type': 'percentage',
+                                  'status': 'active'
+                                },
+                                {
+                                  'name': 'Pajak Minuman',
+                                  'rate': 10.0,
+                                  'type': 'percentage',
+                                  'status': 'inactive'
+                                },
+                              ];
+
+                              final rule = taxRules[index];
+                              final isActive = rule['status'] == 'active';
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                child: Card(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: isActive
+                                                ? Colors.blue
+                                                    .withValues(alpha: 0.1)
+                                                : Colors.grey
+                                                    .withValues(alpha: 0.1),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(
+                                            Icons.receipt,
+                                            color: isActive
+                                                ? Colors.blue
+                                                : Colors.grey,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                rule['name'] as String,
+                                                style: _getSystemFont(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              Text(
+                                                '${rule['rate']}%',
+                                                style: _getSystemFont(
+                                                  fontSize: 12,
+                                                  color:
+                                                      AppColors.secondaryText,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Switch(
+                                          value: isActive,
+                                          onChanged: (value) {
+                                            // TODO: Toggle tax rule status
+                                          },
+                                        ),
+                                        IconButton(
+                                          onPressed: () {
+                                            // TODO: Edit tax rule
+                                          },
+                                          icon: const Icon(Icons.edit),
+                                          tooltip: 'Edit Aturan Pajak',
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ],
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTaxesContent(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        Row(
-          children: [
-            const Icon(
-              Icons.receipt_long_outlined,
-              size: 24,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Pengaturan Pajak',
-              style: _getSystemFont(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Add new tax rule
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Aturan Pajak'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        // Tax Settings Form
-        SizedBox(
-          height: 600, // Fixed height for form
-          child: Row(
-            children: [
-              // Left Panel - Tax Rules
-              Expanded(
-                flex: 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Aturan Pajak',
-                      style: _getSystemFont(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      height: 400, // Fixed height for tax rules list
-                      child: ListView.builder(
-                        itemCount: 4, // Sample data
-                        itemBuilder: (context, index) {
-                          final taxRules = [
-                            {
-                              'name': 'PPN 11%',
-                              'rate': 11.0,
-                              'type': 'percentage',
-                              'status': 'active'
-                            },
-                            {
-                              'name': 'PPh 21',
-                              'rate': 5.0,
-                              'type': 'percentage',
-                              'status': 'active'
-                            },
-                            {
-                              'name': 'Pajak Rokok',
-                              'rate': 15.0,
-                              'type': 'percentage',
-                              'status': 'active'
-                            },
-                            {
-                              'name': 'Pajak Minuman',
-                              'rate': 10.0,
-                              'type': 'percentage',
-                              'status': 'inactive'
-                            },
-                          ];
-
-                          final rule = taxRules[index];
-                          final isActive = rule['status'] == 'active';
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            child: OurbitCard(
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Row(
+                  const SizedBox(width: 24),
+                  // Right Panel - Tax Configuration
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Konfigurasi Pajak',
+                          style: _getSystemFont(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Pengaturan Umum',
+                                  style: _getSystemFont(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
                                   children: [
-                                    Container(
-                                      width: 40,
-                                      height: 40,
-                                      decoration: BoxDecoration(
-                                        color: isActive
-                                            ? Colors.blue.withValues(alpha: 0.1)
-                                            : Colors.grey
-                                                .withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Icon(
-                                        Icons.receipt,
-                                        color: isActive
-                                            ? Colors.blue
-                                            : Colors.grey,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            rule['name'] as String,
-                                            style: _getSystemFont(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          Text(
-                                            '${rule['rate']}%',
+                                            'Pajak Otomatis',
                                             style: _getSystemFont(
                                               fontSize: 12,
-                                              color: isDark
-                                                  ? AppColors.darkSecondaryText
-                                                  : AppColors.secondaryText,
+                                              fontWeight: FontWeight.w500,
                                             ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Switch(
+                                            value: true,
+                                            onChanged: (value) {
+                                              // TODO: Toggle auto tax
+                                            },
                                           ),
                                         ],
                                       ),
                                     ),
-                                    Switch(
-                                      value: isActive,
-                                      onChanged: (value) {
-                                        // TODO: Toggle tax rule status
-                                      },
-                                    ),
-                                    IconButton(
-                                      onPressed: () {
-                                        // TODO: Edit tax rule
-                                      },
-                                      icon: const Icon(Icons.edit),
-                                      tooltip: 'Edit Aturan Pajak',
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Tampilkan Pajak',
+                                            style: _getSystemFont(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Switch(
+                                            value: true,
+                                            onChanged: (value) {
+                                              // TODO: Toggle tax display
+                                            },
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 24),
-              // Right Panel - Tax Configuration
-              Expanded(
-                flex: 1,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Konfigurasi Pajak',
-                      style: _getSystemFont(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    OurbitCard(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Pengaturan Umum',
-                              style: _getSystemFont(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Pajak Otomatis',
-                                        style: _getSystemFont(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Switch(
-                                        value: true,
-                                        onChanged: (value) {
-                                          // TODO: Toggle auto tax
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Tampilkan Pajak',
-                                        style: _getSystemFont(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Switch(
-                                        value: true,
-                                        onChanged: (value) {
-                                          // TODO: Toggle tax display
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Pembulatan Pajak',
-                              style: _getSystemFont(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            DropdownButton<String>(
-                              value: 'round',
-                              isExpanded: true,
-                              items: const [
-                                DropdownMenuItem(
-                                    value: 'round',
-                                    child: Text('Pembulatan ke atas')),
-                                DropdownMenuItem(
-                                    value: 'floor',
-                                    child: Text('Pembulatan ke bawah')),
-                                DropdownMenuItem(
-                                    value: 'nearest',
-                                    child: Text('Pembulatan terdekat')),
-                              ],
-                              onChanged: (value) {
-                                // TODO: Change tax rounding
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Laporan Pajak',
-                              style: _getSystemFont(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                // TODO: Generate tax report
-                              },
-                              icon: const Icon(Icons.download),
-                              label: const Text('Unduh Laporan Pajak'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExpensesContent(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        Row(
-          children: [
-            const Icon(
-              Icons.money_off_outlined,
-              size: 24,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Kelola Biaya Operasional',
-              style: _getSystemFont(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Add new expense
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Biaya'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        // Summary Cards
-        Row(
-          children: [
-            Expanded(
-              child: OurbitCard(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.trending_up,
-                            color: Colors.red,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Total Biaya Bulan Ini',
-                            style: _getSystemFont(
-                              fontSize: 12,
-                              color: isDark
-                                  ? AppColors.darkSecondaryText
-                                  : AppColors.secondaryText,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Rp 2.450.000',
-                        style: _getSystemFont(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: OurbitCard(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.category,
-                            color: Colors.blue,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Kategori Biaya',
-                            style: _getSystemFont(
-                              fontSize: 12,
-                              color: isDark
-                                  ? AppColors.darkSecondaryText
-                                  : AppColors.secondaryText,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '8 Kategori',
-                        style: _getSystemFont(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: OurbitCard(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.receipt,
-                            color: Colors.orange,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Transaksi Bulan Ini',
-                            style: _getSystemFont(
-                              fontSize: 12,
-                              color: isDark
-                                  ? AppColors.darkSecondaryText
-                                  : AppColors.secondaryText,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '24 Transaksi',
-                        style: _getSystemFont(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        // Expenses Table
-        SizedBox(
-          height: 600, // Fixed height for table
-          child: OurbitCard(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('Tanggal')),
-                  DataColumn(label: Text('Kategori')),
-                  DataColumn(label: Text('Deskripsi')),
-                  DataColumn(label: Text('Jumlah')),
-                  DataColumn(label: Text('Status')),
-                  DataColumn(label: Text('Aksi')),
-                ],
-                rows: List.generate(10, (index) {
-                  final categories = [
-                    'Listrik',
-                    'Air',
-                    'Internet',
-                    'Gaji',
-                    'Sewa',
-                    'Maintenance',
-                    'Lainnya'
-                  ];
-                  final category = categories[index % categories.length];
-                  final amount = (index + 1) * 50000 + 100000;
-                  final isPaid = index % 3 != 0;
-
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(
-                          '${DateTime.now().day - index}/${DateTime.now().month}/${DateTime.now().year}')),
-                      DataCell(
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            category,
-                            style: _getSystemFont(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ),
-                      DataCell(Text(
-                          'Biaya ${category.toLowerCase()} bulan ${DateTime.now().month}')),
-                      DataCell(Text(
-                          'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}')),
-                      DataCell(
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: isPaid
-                                ? Colors.green.withValues(alpha: 0.1)
-                                : Colors.orange.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            isPaid ? 'Lunas' : 'Belum Lunas',
-                            style: _getSystemFont(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: isPaid ? Colors.green : Colors.orange,
-                            ),
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: () {
-                                // TODO: Edit expense
-                              },
-                              icon: const Icon(Icons.edit, size: 16),
-                              tooltip: 'Edit',
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                // TODO: Mark as paid
-                              },
-                              icon: Icon(
-                                isPaid ? Icons.check_circle : Icons.payment,
-                                size: 16,
-                              ),
-                              tooltip: isPaid ? 'Sudah Lunas' : 'Tandai Lunas',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoyaltyContent(bool isDark) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Header
-        Row(
-          children: [
-            const Icon(
-              Icons.card_giftcard_outlined,
-              size: 24,
-              color: AppColors.primary,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Program Loyalitas',
-              style: _getSystemFont(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Add new loyalty program
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Tambah Program'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-        // Loyalty Programs Grid
-        SizedBox(
-          height: 600, // Fixed height for grid
-          child: GridView.builder(
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: MediaQuery.of(context).size.width < 1200 ? 1 : 2,
-              childAspectRatio: 1.8,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: 6, // Sample data
-            itemBuilder: (context, index) {
-              final programs = [
-                {
-                  'name': 'Member Silver',
-                  'points': 100,
-                  'discount': 5,
-                  'status': 'active',
-                  'members': 45
-                },
-                {
-                  'name': 'Member Gold',
-                  'points': 500,
-                  'discount': 10,
-                  'status': 'active',
-                  'members': 28
-                },
-                {
-                  'name': 'Member Platinum',
-                  'points': 1000,
-                  'discount': 15,
-                  'status': 'active',
-                  'members': 12
-                },
-                {
-                  'name': 'Member Diamond',
-                  'points': 2000,
-                  'discount': 20,
-                  'status': 'active',
-                  'members': 5
-                },
-                {
-                  'name': 'Birthday Special',
-                  'points': 0,
-                  'discount': 25,
-                  'status': 'active',
-                  'members': 8
-                },
-                {
-                  'name': 'New Member',
-                  'points': 50,
-                  'discount': 3,
-                  'status': 'inactive',
-                  'members': 0
-                },
-              ];
-
-              final program = programs[index];
-              final isActive = program['status'] == 'active';
-
-              return OurbitCard(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: isActive
-                                  ? Colors.purple.withValues(alpha: 0.1)
-                                  : Colors.grey.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(
-                              Icons.card_giftcard,
-                              color: isActive ? Colors.purple : Colors.grey,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+                                const SizedBox(height: 16),
                                 Text(
-                                  program['name'] as String,
+                                  'Pembulatan Pajak',
+                                  style: _getSystemFont(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                DropdownButton<String>(
+                                  value: 'round',
+                                  isExpanded: true,
+                                  items: const [
+                                    DropdownMenuItem(
+                                        value: 'round',
+                                        child: Text('Pembulatan ke atas')),
+                                    DropdownMenuItem(
+                                        value: 'floor',
+                                        child: Text('Pembulatan ke bawah')),
+                                    DropdownMenuItem(
+                                        value: 'nearest',
+                                        child: Text('Pembulatan terdekat')),
+                                  ],
+                                  onChanged: (value) {
+                                    // TODO: Change tax rounding
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Laporan Pajak',
                                   style: _getSystemFont(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: isActive
-                                        ? Colors.green.withValues(alpha: 0.1)
-                                        : Colors.grey.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    isActive ? 'Aktif' : 'Tidak Aktif',
-                                    style: _getSystemFont(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          isActive ? Colors.green : Colors.grey,
-                                    ),
+                                const SizedBox(height: 8),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    // TODO: Generate tax report
+                                  },
+                                  icon: const Icon(Icons.download),
+                                  label: const Text('Unduh Laporan Pajak'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          PopupMenuButton<String>(
-                            onSelected: (value) {
-                              // TODO: Handle menu actions
-                            },
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: 'edit',
-                                child: Row(
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildExpensesContent() {
+    return Consumer(
+      builder: (context, ref, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                const Icon(
+                  Icons.money_off_outlined,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Kelola Biaya Operasional',
+                  style: _getSystemFont(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Add new expense
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Biaya'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Summary Cards
+            Row(
+              children: [
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.trending_up,
+                                color: Colors.red,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Total Biaya Bulan Ini',
+                                style: _getSystemFont(
+                                  fontSize: 12,
+                                  color: AppColors.secondaryText,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Rp 2.450.000',
+                            style: _getSystemFont(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.category,
+                                color: Colors.blue,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Kategori Biaya',
+                                style: _getSystemFont(
+                                  fontSize: 12,
+                                  color: AppColors.secondaryText,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '8 Kategori',
+                            style: _getSystemFont(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.blue,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.receipt,
+                                color: Colors.orange,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Transaksi Bulan Ini',
+                                style: _getSystemFont(
+                                  fontSize: 12,
+                                  color: AppColors.secondaryText,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '24 Transaksi',
+                            style: _getSystemFont(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Expenses Table
+            SizedBox(
+              height: 600,
+              child: Card(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: const [
+                      DataColumn(label: Text('Tanggal')),
+                      DataColumn(label: Text('Kategori')),
+                      DataColumn(label: Text('Deskripsi')),
+                      DataColumn(label: Text('Jumlah')),
+                      DataColumn(label: Text('Status')),
+                      DataColumn(label: Text('Aksi')),
+                    ],
+                    rows: List.generate(10, (index) {
+                      final categories = [
+                        'Listrik',
+                        'Air',
+                        'Internet',
+                        'Gaji',
+                        'Sewa',
+                        'Maintenance',
+                        'Lainnya'
+                      ];
+                      final category = categories[index % categories.length];
+                      final amount = (index + 1) * 50000 + 100000;
+                      final isPaid = index % 3 != 0;
+
+                      return DataRow(
+                        cells: [
+                          DataCell(Text(
+                              '${DateTime.now().day - index}/${DateTime.now().month}/${DateTime.now().year}')),
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                category,
+                                style: _getSystemFont(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ),
+                          DataCell(Text(
+                              'Biaya ${category.toLowerCase()} bulan ${DateTime.now().month}')),
+                          DataCell(Text(
+                              'Rp ${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}')),
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isPaid
+                                    ? Colors.green.withValues(alpha: 0.1)
+                                    : Colors.orange.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                isPaid ? 'Lunas' : 'Belum Lunas',
+                                style: _getSystemFont(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: isPaid ? Colors.green : Colors.orange,
+                                ),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Row(
+                              children: [
+                                IconButton(
+                                  onPressed: () {
+                                    // TODO: Edit expense
+                                  },
+                                  icon: const Icon(Icons.edit, size: 16),
+                                  tooltip: 'Edit',
+                                ),
+                                IconButton(
+                                  onPressed: () {
+                                    // TODO: Mark as paid
+                                  },
+                                  icon: Icon(
+                                    isPaid ? Icons.check_circle : Icons.payment,
+                                    size: 16,
+                                  ),
+                                  tooltip:
+                                      isPaid ? 'Sudah Lunas' : 'Tandai Lunas',
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildLoyaltyContent() {
+    return Consumer(
+      builder: (context, ref, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                const Icon(
+                  Icons.card_giftcard_outlined,
+                  size: 24,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Program Loyalitas',
+                  style: _getSystemFont(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const Spacer(),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    // TODO: Add new loyalty program
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Tambah Program'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            // Loyalty Programs Grid
+            SizedBox(
+              height: 600,
+              child: GridView.builder(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount:
+                      MediaQuery.of(context).size.width < 1200 ? 1 : 2,
+                  childAspectRatio: 1.8,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: 6, // Sample data
+                itemBuilder: (context, index) {
+                  final programs = [
+                    {
+                      'name': 'Member Silver',
+                      'points': 100,
+                      'discount': 5,
+                      'status': 'active',
+                      'members': 45
+                    },
+                    {
+                      'name': 'Member Gold',
+                      'points': 500,
+                      'discount': 10,
+                      'status': 'active',
+                      'members': 28
+                    },
+                    {
+                      'name': 'Member Platinum',
+                      'points': 1000,
+                      'discount': 15,
+                      'status': 'active',
+                      'members': 12
+                    },
+                    {
+                      'name': 'Member Diamond',
+                      'points': 2000,
+                      'discount': 20,
+                      'status': 'active',
+                      'members': 5
+                    },
+                    {
+                      'name': 'Birthday Special',
+                      'points': 0,
+                      'discount': 25,
+                      'status': 'active',
+                      'members': 8
+                    },
+                    {
+                      'name': 'New Member',
+                      'points': 50,
+                      'discount': 3,
+                      'status': 'inactive',
+                      'members': 0
+                    },
+                  ];
+
+                  final program = programs[index];
+                  final isActive = program['status'] == 'active';
+
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: isActive
+                                      ? Colors.purple.withValues(alpha: 0.1)
+                                      : Colors.grey.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  Icons.card_giftcard,
+                                  color: isActive ? Colors.purple : Colors.grey,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.edit, size: 16),
-                                    SizedBox(width: 8),
-                                    Text('Edit'),
+                                    Text(
+                                      program['name'] as String,
+                                      style: _getSystemFont(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: isActive
+                                            ? Colors.green
+                                                .withValues(alpha: 0.1)
+                                            : Colors.grey
+                                                .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        isActive ? 'Aktif' : 'Tidak Aktif',
+                                        style: _getSystemFont(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w500,
+                                          color: isActive
+                                              ? Colors.green
+                                              : Colors.grey,
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
-                              const PopupMenuItem(
-                                value: 'members',
-                                child: Row(
+                              PopupMenuButton<String>(
+                                onSelected: (value) {
+                                  // TODO: Handle menu actions
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'edit',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.edit, size: 16),
+                                        SizedBox(width: 8),
+                                        Text('Edit'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'members',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.people, size: 16),
+                                        SizedBox(width: 8),
+                                        Text('Lihat Member'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.delete, size: 16),
+                                        Text('Hapus'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                child: const Icon(Icons.more_vert),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.people, size: 16),
-                                    SizedBox(width: 8),
-                                    Text('Lihat Member'),
+                                    Text(
+                                      'Min. Poin',
+                                      style: _getSystemFont(
+                                        fontSize: 12,
+                                        color: AppColors.secondaryText,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${program['points']}',
+                                      style: _getSystemFont(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Row(
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Icon(Icons.delete, size: 16),
-                                    Text('Hapus'),
+                                    Text(
+                                      'Diskon',
+                                      style: _getSystemFont(
+                                        fontSize: 12,
+                                        color: AppColors.secondaryText,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${program['discount']}%',
+                                      style: _getSystemFont(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.green,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Member',
+                                      style: _getSystemFont(
+                                        fontSize: 12,
+                                        color: AppColors.secondaryText,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${program['members']}',
+                                      style: _getSystemFont(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
                             ],
-                            child: const Icon(Icons.more_vert),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  onPressed: () {
+                                    // TODO: View program details
+                                  },
+                                  child: const Text('Detail'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    // TODO: Manage members
+                                  },
+                                  child: const Text('Kelola'),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Min. Poin',
-                                  style: _getSystemFont(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppColors.darkSecondaryText
-                                        : AppColors.secondaryText,
-                                  ),
-                                ),
-                                Text(
-                                  '${program['points']}',
-                                  style: _getSystemFont(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Diskon',
-                                  style: _getSystemFont(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppColors.darkSecondaryText
-                                        : AppColors.secondaryText,
-                                  ),
-                                ),
-                                Text(
-                                  '${program['discount']}%',
-                                  style: _getSystemFont(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.green,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Member',
-                                  style: _getSystemFont(
-                                    fontSize: 12,
-                                    color: isDark
-                                        ? AppColors.darkSecondaryText
-                                        : AppColors.secondaryText,
-                                  ),
-                                ),
-                                Text(
-                                  '${program['members']}',
-                                  style: _getSystemFont(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () {
-                                // TODO: View program details
-                              },
-                              child: const Text('Detail'),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                // TODO: Manage members
-                              },
-                              child: const Text('Kelola'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildComingSoonContent(bool isDark, ManagementMenuItem item) {
-    return OurbitCard(
+  Widget _buildComingSoonContent(ManagementMenuItem item) {
+    return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -2452,9 +2478,7 @@ class _ManagementPageState extends State<ManagementPage> {
             Icon(
               item.icon,
               size: 64,
-              color: isDark
-                  ? AppColors.darkSecondaryText
-                  : AppColors.secondaryText,
+              color: AppColors.secondaryText,
             ),
             const SizedBox(height: 16),
             Text(
@@ -2469,9 +2493,7 @@ class _ManagementPageState extends State<ManagementPage> {
               item.description,
               style: _getSystemFont(
                 fontSize: 14,
-                color: isDark
-                    ? AppColors.darkSecondaryText
-                    : AppColors.secondaryText,
+                color: AppColors.secondaryText,
               ),
               textAlign: TextAlign.center,
             ),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:ourbit_pos/src/core/theme/app_theme.dart';
-import 'package:ourbit_pos/src/widgets/app_sidebar.dart';
-import 'package:ourbit_pos/src/widgets/ourbit_card.dart';
+import 'package:allnimall_store/src/core/theme/app_theme.dart';
+import 'package:allnimall_store/src/widgets/app_sidebar.dart';
 
 class OrganizationPage extends StatefulWidget {
   const OrganizationPage({super.key});
@@ -44,13 +43,9 @@ class _OrganizationPageState extends State<OrganizationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       body: Container(
-        color: isDark
-            ? AppColors.darkSurfaceBackground
-            : AppColors.surfaceBackground,
+        color: AppColors.surfaceBackground,
         child: Row(
           children: [
             // Sidebar
@@ -64,14 +59,11 @@ class _OrganizationPageState extends State<OrganizationPage> {
                     height: 80,
                     padding: const EdgeInsets.symmetric(
                         horizontal: 24, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkPrimaryBackground
-                          : AppColors.primaryBackground,
+                    decoration: const BoxDecoration(
+                      color: AppColors.primaryBackground,
                       border: Border(
                         bottom: BorderSide(
-                          color:
-                              isDark ? AppColors.darkBorder : AppColors.border,
+                          color: AppColors.border,
                           width: 1,
                         ),
                       ),
@@ -107,15 +99,11 @@ class _OrganizationPageState extends State<OrganizationPage> {
                         // Left Panel - Menu List
                         Container(
                           width: 300,
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? AppColors.darkPrimaryBackground
-                                : AppColors.primaryBackground,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryBackground,
                             border: Border(
                               right: BorderSide(
-                                color: isDark
-                                    ? AppColors.darkBorder
-                                    : AppColors.border,
+                                color: AppColors.border,
                                 width: 1,
                               ),
                             ),
@@ -179,11 +167,7 @@ class _OrganizationPageState extends State<OrganizationPage> {
                                                   size: 20,
                                                   color: isSelected
                                                       ? AppColors.primary
-                                                      : isDark
-                                                          ? AppColors
-                                                              .darkSecondaryText
-                                                          : AppColors
-                                                              .secondaryText,
+                                                      : AppColors.secondaryText,
                                                 ),
                                                 const SizedBox(width: 12),
                                                 Expanded(
@@ -201,11 +185,8 @@ class _OrganizationPageState extends State<OrganizationPage> {
                                                           color: isSelected
                                                               ? AppColors
                                                                   .primary
-                                                              : isDark
-                                                                  ? AppColors
-                                                                      .darkPrimaryText
-                                                                  : AppColors
-                                                                      .primaryText,
+                                                              : AppColors
+                                                                  .primaryText,
                                                         ),
                                                       ),
                                                       const SizedBox(height: 2),
@@ -213,11 +194,8 @@ class _OrganizationPageState extends State<OrganizationPage> {
                                                         item.description,
                                                         style: _getSystemFont(
                                                           fontSize: 12,
-                                                          color: isDark
-                                                              ? AppColors
-                                                                  .darkSecondaryText
-                                                              : AppColors
-                                                                  .secondaryText,
+                                                          color: AppColors
+                                                              .secondaryText,
                                                         ),
                                                       ),
                                                     ],
@@ -239,7 +217,7 @@ class _OrganizationPageState extends State<OrganizationPage> {
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.all(24),
-                            child: _buildContent(isDark),
+                            child: _buildContent(),
                           ),
                         ),
                       ],
@@ -254,15 +232,15 @@ class _OrganizationPageState extends State<OrganizationPage> {
     );
   }
 
-  Widget _buildContent(bool isDark) {
+  Widget _buildContent() {
     final selectedItem =
         _menuItems.firstWhere((item) => item.id == _selectedMenu);
 
-    return _buildComingSoonContent(isDark, selectedItem);
+    return _buildComingSoonContent(selectedItem);
   }
 
-  Widget _buildComingSoonContent(bool isDark, OrganizationMenuItem item) {
-    return OurbitCard(
+  Widget _buildComingSoonContent(OrganizationMenuItem item) {
+    return Card(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -271,9 +249,7 @@ class _OrganizationPageState extends State<OrganizationPage> {
             Icon(
               item.icon,
               size: 64,
-              color: isDark
-                  ? AppColors.darkSecondaryText
-                  : AppColors.secondaryText,
+              color: AppColors.secondaryText,
             ),
             const SizedBox(height: 16),
             Text(
@@ -288,9 +264,7 @@ class _OrganizationPageState extends State<OrganizationPage> {
               item.description,
               style: _getSystemFont(
                 fontSize: 14,
-                color: isDark
-                    ? AppColors.darkSecondaryText
-                    : AppColors.secondaryText,
+                color: AppColors.secondaryText,
               ),
               textAlign: TextAlign.center,
             ),
