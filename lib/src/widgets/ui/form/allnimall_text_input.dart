@@ -11,6 +11,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 /// - ✅ Form validation integration
 /// - ✅ Customizable styling
 /// - ✅ Focus management
+/// - ✅ Leading dan trailing widgets
 ///
 /// ## Penggunaan:
 ///
@@ -21,11 +22,33 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 ///   onChanged: (value) => print(value),
 /// )
 ///
+/// // With leading icon
+/// AllnimallTextInput(
+///   placeholder: 'Search products',
+///   leading: Icon(Icons.search),
+///   onChanged: (value) => print(value),
+/// )
+///
+/// // With leading and trailing widgets
+/// AllnimallTextInput(
+///   placeholder: 'Enter amount',
+///   leading: Icon(Icons.attach_money),
+///   features: [
+///     InputFeature.trailing(
+///       IconButton(
+///         onPressed: () => print('Clear'),
+///         icon: Icon(Icons.clear),
+///       ),
+///     ),
+///   ],
+/// )
+///
 /// // With form validation
 /// AllnimallFormField(
 ///   fieldKey: const TextFieldKey('username'),
 ///   label: 'Username',
 ///   placeholder: 'Enter username',
+///   leading: Icon(Icons.person),
 ///   validator: (value) {
 ///     if (value == null || value.isEmpty) {
 ///       return 'Username is required';
@@ -39,6 +62,7 @@ import 'package:shadcn_flutter/shadcn_flutter.dart';
 ///   fieldKey: const TextFieldKey('password'),
 ///   label: 'Password',
 ///   placeholder: 'Enter password',
+///   leading: Icon(Icons.lock),
 ///   obscureText: !_isPasswordVisible,
 ///   features: [
 ///     InputFeature.trailing(
@@ -55,6 +79,7 @@ class AllnimallTextInput extends StatefulWidget {
   final String? label;
   final bool obscureText;
   final List<InputFeature>? features;
+  final Widget? leading;
   final TextFieldKey? fieldKey;
   final FormValidationMode? showErrors;
   final String? Function(String?)? validator;
@@ -74,6 +99,7 @@ class AllnimallTextInput extends StatefulWidget {
     this.label,
     this.obscureText = false,
     this.features,
+    this.leading,
     this.fieldKey,
     this.showErrors,
     this.validator,
@@ -162,7 +188,11 @@ class _AllnimallTextInputState extends State<AllnimallTextInput>
               placeholder:
                   widget.placeholder != null ? Text(widget.placeholder!) : null,
               obscureText: widget.obscureText,
-              features: widget.features ?? [],
+              features: [
+                if (widget.leading != null)
+                  InputFeature.leading(widget.leading!),
+                ...?widget.features,
+              ],
               onChanged: widget.onChanged,
               onSubmitted: widget.onSubmitted,
               controller: widget.controller,
@@ -195,6 +225,7 @@ class _AllnimallTextInputState extends State<AllnimallTextInput>
 ///         fieldKey: const TextFieldKey('email'),
 ///         label: 'Email',
 ///         placeholder: 'Enter your email',
+///         leading: Icon(Icons.email),
 ///         validator: (value) {
 ///           if (value == null || value.isEmpty) {
 ///             return 'Email is required';
@@ -212,6 +243,7 @@ class AllnimallFormField extends StatelessWidget {
   final String? placeholder;
   final bool obscureText;
   final List<InputFeature>? features;
+  final Widget? leading;
   final Set<FormValidationMode>? showErrors;
   final Validator<String>? validator;
   final void Function(String?)? onChanged;
@@ -230,6 +262,7 @@ class AllnimallFormField extends StatelessWidget {
     this.placeholder,
     this.obscureText = false,
     this.features,
+    this.leading,
     this.showErrors,
     this.validator,
     this.onChanged,
@@ -253,6 +286,7 @@ class AllnimallFormField extends StatelessWidget {
         placeholder: placeholder,
         obscureText: obscureText,
         features: features,
+        leading: leading,
         onChanged: onChanged,
         onSubmitted: onSubmitted,
         controller: controller,

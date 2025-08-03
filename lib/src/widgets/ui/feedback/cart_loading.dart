@@ -20,7 +20,7 @@ class CartLoading extends StatelessWidget {
                 const Text('Keranjang Belanja').bold().large.asSkeleton(),
                 const SizedBox(height: 16),
                 // Cart items skeleton
-                Expanded(
+                Flexible(
                   child: ListView.builder(
                     itemCount: 8, // Show 8 skeleton cart items
                     itemBuilder: (context, index) {
@@ -44,13 +44,17 @@ class CartLoading extends StatelessWidget {
                                 // Product details skeleton
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text('Product Name')
                                           .semiBold()
                                           .asSkeleton(),
                                       const SizedBox(height: 4),
-                                      const Text('Rp 0').muted().small().asSkeleton(),
+                                      const Text('Rp 0')
+                                          .muted()
+                                          .small()
+                                          .asSkeleton(),
                                     ],
                                   ),
                                 ),
@@ -68,7 +72,8 @@ class CartLoading extends StatelessWidget {
                                       width: 40,
                                       height: 32,
                                       decoration: BoxDecoration(
-                                        border: Border.all(color: Colors.slate[300]),
+                                        border: Border.all(
+                                            color: Colors.slate[300]),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: const Center(
@@ -121,4 +126,4 @@ class CartLoading extends StatelessWidget {
       ],
     );
   }
-} 
+}
