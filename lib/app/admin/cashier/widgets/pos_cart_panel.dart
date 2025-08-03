@@ -4,18 +4,12 @@ import 'package:allnimall_store/src/widgets/ui/form/allnimall_button.dart';
 import 'package:allnimall_store/src/widgets/ui/form/allnimall_icon_button.dart';
 import 'package:allnimall_store/src/data/objects/cart_item.dart';
 import 'package:allnimall_store/src/providers/cashier_provider.dart';
+import 'package:allnimall_store/src/core/services/supabase_service.dart';
+import 'package:allnimall_store/src/core/services/local_storage_service.dart';
+import 'package:allnimall_store/src/core/utils/number_formatter.dart';
 
 class PosCartPanel extends ConsumerStatefulWidget {
-  final Function(String)? onRemoveFromCart;
-  final Function(String, int)? onUpdateQuantity;
-  final VoidCallback? onCheckout;
-
-  const PosCartPanel({
-    super.key,
-    this.onRemoveFromCart,
-    this.onUpdateQuantity,
-    this.onCheckout,
-  });
+  const PosCartPanel({super.key});
 
   @override
   ConsumerState<PosCartPanel> createState() => _PosCartPanelState();
@@ -34,44 +28,101 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
   Future<void> _loadCartData() async {
     if (!mounted) return;
 
+    debugPrint('🛒 [PosCartPanel] Mulai load cart data...');
+
     setState(() {
       isLoadingCart = true;
     });
 
     try {
+      // Debug: Check if user is authenticated
+      debugPrint('🔐 [PosCartPanel] Checking authentication...');
+      final isAuthenticated = await SupabaseService.isUserAuthenticated();
+      debugPrint('🔐 [PosCartPanel] Is authenticated: $isAuthenticated');
+
+      if (!isAuthenticated) {
+        throw Exception('User tidak terautentikasi');
+      }
+
+      // Debug: Get store ID
+      debugPrint('🏪 [PosCartPanel] Getting store ID...');
+      final storeId = await SupabaseService.getStoreId();
+      debugPrint('🏪 [PosCartPanel] Store ID: $storeId');
+
+      if (storeId == null) {
+        throw Exception(
+            'Store ID tidak ditemukan. Pastikan user sudah login dan memiliki akses ke store.');
+      }
+
+      // Debug: Check if cashier provider is initialized
+      debugPrint('🔄 [PosCartPanel] Checking cashier provider state...');
+      final cashierState = ref.read(cashierProvider);
+      debugPrint(
+          '🔄 [PosCartPanel] Current cashier state: ${cashierState.runtimeType}');
+
+      if (cashierState is CashierInitial) {
+        debugPrint('🔄 [PosCartPanel] Initializing cashier provider...');
+        // Initialize cashier provider first
+        await ref.read(cashierProvider.notifier).loadProducts();
+        debugPrint('🔄 [PosCartPanel] Cashier provider initialized');
+      }
+
       // Use cashier provider to load cart
+      debugPrint('🛒 [PosCartPanel] Loading cart via cashier provider...');
       await ref.read(cashierProvider.notifier).loadCart();
+      debugPrint('🛒 [PosCartPanel] Cart loaded via provider');
 
       // Get cart items from cashier state
-      final cashierState = ref.read(cashierProvider);
-      if (cashierState is CashierLoaded) {
+      debugPrint('📊 [PosCartPanel] Getting updated cashier state...');
+      final updatedCashierState = ref.read(cashierProvider);
+      debugPrint(
+          '📊 [PosCartPanel] Updated state type: ${updatedCashierState.runtimeType}');
+
+      if (updatedCashierState is CashierLoaded) {
+        debugPrint(
+            '✅ [PosCartPanel] Successfully loaded cart with ${updatedCashierState.cartItems.length} items');
         if (mounted) {
           setState(() {
-            cartItems = cashierState.cartItems;
+            cartItems = updatedCashierState.cartItems;
             isLoadingCart = false;
           });
         }
-      } else if (cashierState is CashierError) {
-        throw Exception(cashierState.message);
+      } else if (updatedCashierState is CashierError) {
+        debugPrint(
+            '❌ [PosCartPanel] Cashier error: ${updatedCashierState.message}');
+        throw Exception(updatedCashierState.message);
       } else {
-        throw Exception('Failed to load cart');
+        debugPrint(
+            '❌ [PosCartPanel] Invalid state: ${updatedCashierState.runtimeType}');
+        throw Exception('Gagal memuat keranjang: State tidak valid');
       }
     } catch (e) {
+      debugPrint('❌ [PosCartPanel] Error in _loadCartData: $e');
       if (mounted) {
         setState(() {
           isLoadingCart = false;
         });
       }
 
-      // Show error toast
+      // Show error toast with more detailed information
       if (mounted) {
         showToast(
           context: context,
           builder: (context, overlay) {
             return SurfaceCard(
               child: Basic(
-                title: const Text('Error'),
-                content: Text('Gagal memuat keranjang: $e'),
+                title: const Text('Error Memuat Keranjang'),
+                content: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Detail error: $e'),
+                    const SizedBox(height: 8),
+                    const Text('Tips:'),
+                    const Text('• Pastikan sudah login'),
+                    const Text('• Pastikan memiliki akses ke store'),
+                    const Text('• Coba refresh halaman'),
+                  ],
+                ),
                 trailing: SizedBox(
                   height: 32,
                   child: AllnimallButton.ghost(
@@ -101,9 +152,6 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
 
       // Reload cart data
       await _loadCartData();
-
-      // Call parent callback
-      widget.onRemoveFromCart?.call(cartItemId);
     } catch (e) {
       // Show error toast
       if (mounted) {
@@ -143,9 +191,6 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
 
       // Reload cart data
       await _loadCartData();
-
-      // Call parent callback
-      widget.onUpdateQuantity?.call(cartItemId, newQuantity);
     } catch (e) {
       // Show error toast
       if (mounted) {
@@ -178,9 +223,6 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
       cartItems.fold(0, (sum, item) => sum + item.totalPrice);
 
   void _handleCheckout() {
-    // Call parent callback if provided
-    widget.onCheckout?.call();
-
     // TODO: Implement checkout logic here
     // - Navigate to payment page
     // - Process payment
@@ -191,12 +233,18 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
   Widget build(BuildContext context) {
     // Listen to cashier state changes
     ref.listen<CashierState>(cashierProvider, (previous, next) {
+      debugPrint(
+          '🔄 [PosCartPanel] State changed from ${previous.runtimeType} to ${next.runtimeType}');
+
       if (next is CashierLoaded) {
+        debugPrint(
+            '✅ [PosCartPanel] CashierLoaded with ${next.cartItems.length} items');
         setState(() {
           cartItems = next.cartItems;
           isLoadingCart = false;
         });
       } else if (next is CashierError) {
+        debugPrint('❌ [PosCartPanel] CashierError: ${next.message}');
         setState(() {
           isLoadingCart = false;
         });
@@ -223,6 +271,7 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
           },
         );
       } else if (next is CashierLoading) {
+        debugPrint('⏳ [PosCartPanel] CashierLoading');
         setState(() {
           isLoadingCart = true;
         });
@@ -238,107 +287,200 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
       ),
       child: Column(
         children: [
-          const Text('Keranjang Belanja').bold().large,
+          Row(
+            children: [
+              const Text('Keranjang Belanja').bold().large,
+              const Spacer(),
+              if (isLoadingCart)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(),
+                ),
+              // Debug button
+              AllnimallIconButton.ghost(
+                onPressed: () async {
+                  try {
+                    final isAuthenticated =
+                        await SupabaseService.isUserAuthenticated();
+                    final storeId = await SupabaseService.getStoreId();
+                    final userData = await LocalStorageService.getUserData();
+                    final roleData =
+                        await LocalStorageService.getRoleAssignmentData();
+
+                    if (!mounted) return;
+
+                    showDialog(
+                      context: context,
+                      builder: (dialogContext) => AlertDialog(
+                        title: const Text('Debug Info'),
+                        content: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Authenticated: $isAuthenticated'),
+                            Text('Store ID: $storeId'),
+                            Text(
+                                'User Data: ${userData != null ? "Available" : "Not available"}'),
+                            Text(
+                                'Role Data: ${roleData != null ? "Available" : "Not available"}'),
+                            if (roleData != null) ...[
+                              Text(
+                                  'Store ID from role: ${roleData['store_id']}'),
+                              Text('Role ID: ${roleData['role_id']}'),
+                            ],
+                          ],
+                        ),
+                        actions: [
+                          AllnimallButton.primary(
+                            onPressed: () => Navigator.pop(dialogContext),
+                            child: const Text('Tutup'),
+                          ),
+                        ],
+                      ),
+                    );
+                  } catch (e) {
+                    if (!mounted) return;
+
+                    showToast(
+                      context: context,
+                      builder: (toastContext, overlay) {
+                        return SurfaceCard(
+                          child: Basic(
+                            title: const Text('Debug Error'),
+                            content: Text('Error: $e'),
+                            trailing: SizedBox(
+                              height: 32,
+                              child: AllnimallButton.ghost(
+                                onPressed: () => overlay.close(),
+                                child: const Text('Tutup'),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  }
+                },
+                icon: const Icon(Icons.bug_report, size: 16),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
           // Cart items
           Expanded(
-            child: cartItems.isEmpty
-                ? Center(
+            child: isLoadingCart
+                ? const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.shopping_cart_outlined,
-                          size: 64,
-                          color: Colors.slate[100],
-                        ),
-                        const SizedBox(height: 16),
-                        const Text('Keranjang kosong').muted().large(),
-                        const SizedBox(height: 8),
-                        const Text(
-                                'Pilih produk untuk ditambahkan ke keranjang')
-                            .muted()
-                            .small(),
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text('Memuat keranjang...'),
                       ],
                     ),
                   )
-                : ListView.builder(
-                    shrinkWrap: true,
-                    physics: const ClampingScrollPhysics(),
-                    itemCount: cartItems.length,
-                    itemBuilder: (context, index) {
-                      final cartItem = cartItems[index];
-                      return SurfaceCard(
-                        padding: const EdgeInsets.all(12),
+                : cartItems.isEmpty
+                    ? Center(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(cartItem.product.name).semiBold(),
-                                ),
-                                SizedBox(
-                                  width: 32,
-                                  height: 32,
-                                  child: AllnimallIconButton.ghost(
-                                    onPressed: () =>
-                                        _removeFromCart(cartItem.id),
-                                    icon: const Icon(Icons.close, size: 16),
-                                  ),
-                                ),
-                              ],
+                            Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 64,
+                              color: Colors.slate[100],
                             ),
+                            const SizedBox(height: 16),
+                            const Text('Keranjang kosong').muted().large(),
                             const SizedBox(height: 8),
-                            Row(
+                            const Text(
+                                    'Pilih produk untuk ditambahkan ke keranjang')
+                                .muted()
+                                .small(),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const ClampingScrollPhysics(),
+                        itemCount: cartItems.length,
+                        itemBuilder: (context, index) {
+                          final cartItem = cartItems[index];
+                          return SurfaceCard(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Rp ${cartItem.product.price.toStringAsFixed(0)}')
-                                    .muted()
-                                    .small(),
-                                const Spacer(),
                                 Row(
-                                  mainAxisSize: MainAxisSize.min,
                                   children: [
+                                    Expanded(
+                                      child: Text(cartItem.product.name)
+                                          .semiBold(),
+                                    ),
                                     SizedBox(
                                       width: 32,
                                       height: 32,
                                       child: AllnimallIconButton.ghost(
-                                        onPressed: () => _updateQuantity(
-                                            cartItem.id, cartItem.quantity - 1),
-                                        icon:
-                                            const Icon(Icons.remove, size: 16),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    SizedBox(
-                                      width: 40,
-                                      child: Text('${cartItem.quantity}')
-                                          .semiBold()
-                                          .center(),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    SizedBox(
-                                      width: 32,
-                                      height: 32,
-                                      child: AllnimallIconButton.ghost(
-                                        onPressed: () => _updateQuantity(
-                                            cartItem.id, cartItem.quantity + 1),
-                                        icon: const Icon(Icons.add, size: 16),
+                                        onPressed: () =>
+                                            _removeFromCart(cartItem.id),
+                                        icon: const Icon(Icons.close, size: 16),
                                       ),
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Text(cartItem.product.formattedPrice)
+                                        .muted()
+                                        .small(),
+                                    const Spacer(),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        SizedBox(
+                                          width: 32,
+                                          height: 32,
+                                          child: AllnimallIconButton.ghost(
+                                            onPressed: () => _updateQuantity(
+                                                cartItem.id,
+                                                cartItem.quantity - 1),
+                                            icon: const Icon(Icons.remove,
+                                                size: 16),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        SizedBox(
+                                          width: 40,
+                                          child: Text(cartItem.formattedQuantity)
+                                              .semiBold()
+                                              .center(),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        SizedBox(
+                                          width: 32,
+                                          height: 32,
+                                          child: AllnimallIconButton.ghost(
+                                            onPressed: () => _updateQuantity(
+                                                cartItem.id,
+                                                cartItem.quantity + 1),
+                                            icon:
+                                                const Icon(Icons.add, size: 16),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                Text('Total: ${cartItem.formattedTotalPrice}')
+                                    .semiBold()
+                                    .small(),
                               ],
                             ),
-                            const SizedBox(height: 4),
-                            Text('Total: Rp ${cartItem.totalPrice.toStringAsFixed(0)}')
-                                .semiBold()
-                                .small(),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          );
+                        },
+                      ),
           ),
           // Cart summary
           SurfaceCard(
@@ -350,7 +492,7 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                   children: [
                     const Text('Total:').semiBold(),
                     const Spacer(),
-                    Text('Rp ${totalPrice.toStringAsFixed(0)}').h3().bold(),
+                    Text(NumberFormatter.formatTotalPrice(totalPrice)).h3().bold(),
                   ],
                 ),
                 const SizedBox(height: 16),

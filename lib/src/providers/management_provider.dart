@@ -7,6 +7,7 @@ import 'package:allnimall_store/src/data/usecases/get_suppliers_usecase.dart';
 import 'package:allnimall_store/src/data/usecases/get_discounts_usecase.dart';
 import 'package:allnimall_store/src/data/usecases/get_expenses_usecase.dart';
 import 'package:allnimall_store/src/data/usecases/get_loyalty_programs_usecase.dart';
+import 'package:allnimall_store/src/data/usecases/delete_product_usecase.dart';
 import 'package:allnimall_store/src/data/repositories/management_repository_impl.dart';
 
 import 'auth_provider.dart';
@@ -111,9 +112,15 @@ final getExpensesUseCaseProvider = Provider<GetExpensesUseCase>((ref) {
   return GetExpensesUseCase(managementRepository);
 });
 
-final getLoyaltyProgramsUseCaseProvider = Provider<GetLoyaltyProgramsUseCase>((ref) {
+final getLoyaltyProgramsUseCaseProvider =
+    Provider<GetLoyaltyProgramsUseCase>((ref) {
   final managementRepository = ref.read(managementRepositoryProvider);
   return GetLoyaltyProgramsUseCase(managementRepository);
+});
+
+final deleteProductUseCaseProvider = Provider<DeleteProductUseCase>((ref) {
+  final managementRepository = ref.read(managementRepositoryProvider);
+  return DeleteProductUseCase(managementRepository);
 });
 
 // Management Notifier
@@ -202,7 +209,8 @@ class ManagementNotifier extends StateNotifier<ManagementState> {
   Future<void> loadLoyaltyPrograms() async {
     state = ManagementLoading();
     try {
-      final getLoyaltyProgramsUseCase = ref.read(getLoyaltyProgramsUseCaseProvider);
+      final getLoyaltyProgramsUseCase =
+          ref.read(getLoyaltyProgramsUseCaseProvider);
       final programs = await getLoyaltyProgramsUseCase.execute();
       state = LoyaltyProgramsLoaded(programs);
     } catch (e) {
@@ -231,8 +239,9 @@ class ManagementNotifier extends StateNotifier<ManagementState> {
 
   Future<void> deleteProduct(String productId) async {
     try {
-      // TODO: Implement delete product usecase
-      await loadProducts();
+      final deleteProductUseCase = ref.read(deleteProductUseCaseProvider);
+      await deleteProductUseCase.execute(productId);
+      await loadProducts(); // Reload products after deletion
     } catch (e) {
       state = ManagementError(e.toString());
     }
@@ -247,7 +256,8 @@ class ManagementNotifier extends StateNotifier<ManagementState> {
     }
   }
 
-  Future<void> updateCategory(String categoryId, Map<String, dynamic> category) async {
+  Future<void> updateCategory(
+      String categoryId, Map<String, dynamic> category) async {
     try {
       // TODO: Implement update category usecase
       await loadCategories();
@@ -274,7 +284,8 @@ class ManagementNotifier extends StateNotifier<ManagementState> {
     }
   }
 
-  Future<void> updateCustomer(String customerId, Map<String, dynamic> customer) async {
+  Future<void> updateCustomer(
+      String customerId, Map<String, dynamic> customer) async {
     try {
       // TODO: Implement update customer usecase
       await loadCustomers();
@@ -301,7 +312,8 @@ class ManagementNotifier extends StateNotifier<ManagementState> {
     }
   }
 
-  Future<void> updateSupplier(String supplierId, Map<String, dynamic> supplier) async {
+  Future<void> updateSupplier(
+      String supplierId, Map<String, dynamic> supplier) async {
     try {
       // TODO: Implement update supplier usecase
       await loadSuppliers();
@@ -328,7 +340,8 @@ class ManagementNotifier extends StateNotifier<ManagementState> {
     }
   }
 
-  Future<void> updateDiscount(String discountId, Map<String, dynamic> discount) async {
+  Future<void> updateDiscount(
+      String discountId, Map<String, dynamic> discount) async {
     try {
       // TODO: Implement update discount usecase
       await loadDiscounts();
@@ -364,7 +377,8 @@ class ManagementNotifier extends StateNotifier<ManagementState> {
     }
   }
 
-  Future<void> updateExpense(String expenseId, Map<String, dynamic> expense) async {
+  Future<void> updateExpense(
+      String expenseId, Map<String, dynamic> expense) async {
     try {
       // TODO: Implement update expense usecase
       await loadExpenses();
@@ -400,7 +414,8 @@ class ManagementNotifier extends StateNotifier<ManagementState> {
     }
   }
 
-  Future<void> updateLoyaltyProgram(String programId, Map<String, dynamic> program) async {
+  Future<void> updateLoyaltyProgram(
+      String programId, Map<String, dynamic> program) async {
     try {
       // TODO: Implement update loyalty program usecase
       await loadLoyaltyPrograms();
@@ -429,6 +444,7 @@ class ManagementNotifier extends StateNotifier<ManagementState> {
 }
 
 // Management Provider
-final managementProvider = StateNotifierProvider<ManagementNotifier, ManagementState>((ref) {
+final managementProvider =
+    StateNotifierProvider<ManagementNotifier, ManagementState>((ref) {
   return ManagementNotifier(ref);
-}); 
+});

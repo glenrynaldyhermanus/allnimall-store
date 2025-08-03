@@ -118,18 +118,32 @@ class SupabaseService {
 
   // Get user's store ID from local storage first, then from database if needed
   static Future<String?> getStoreId() async {
+    debugPrint('🏪 [SupabaseService] Getting store ID...');
+
     // Try to get from local storage first (more efficient)
     final storeId = await LocalStorageService.getStoreId();
+    debugPrint('🏪 [SupabaseService] Store ID from local storage: $storeId');
+
     if (storeId != null) {
+      debugPrint('✅ [SupabaseService] Store ID found in local storage');
       return storeId;
     }
+
+    debugPrint(
+        '🔄 [SupabaseService] Store ID not in local storage, getting from database...');
 
     // If not in local storage, get from database and cache it
     try {
       final user = client.auth.currentUser;
-      if (user == null) return null;
+      debugPrint('👤 [SupabaseService] Current user: ${user?.email}');
+
+      if (user == null) {
+        debugPrint('❌ [SupabaseService] No current user found');
+        return null;
+      }
 
       // First, get the user from our users table using auth_id
+      debugPrint('👤 [SupabaseService] Getting user from users table...');
       final userResponse = await client
           .from('users')
           .select('id')
@@ -138,8 +152,10 @@ class SupabaseService {
           .single();
 
       final userId = userResponse['id'];
+      debugPrint('👤 [SupabaseService] User ID from database: $userId');
 
       // Now query role_assignments using the user ID from our users table
+      debugPrint('🔍 [SupabaseService] Getting role assignment...');
       final response = await client
           .from('role_assignments')
           .select('store_id')
@@ -149,15 +165,19 @@ class SupabaseService {
           .single();
 
       final storeIdFromDb = response['store_id'];
+      debugPrint('🏪 [SupabaseService] Store ID from database: $storeIdFromDb');
 
       // Cache the store ID for future use
       if (storeIdFromDb != null) {
+        debugPrint('💾 [SupabaseService] Caching store ID...');
         await LocalStorageService.saveRoleAssignmentData(
             {'store_id': storeIdFromDb});
+        debugPrint('✅ [SupabaseService] Store ID cached successfully');
       }
 
       return storeIdFromDb;
     } catch (e) {
+      debugPrint('❌ [SupabaseService] Error getting store ID: $e');
       // TODO: gunakan logger jika perlu
       return null;
     }
@@ -223,7 +243,7 @@ class SupabaseService {
         await LocalStorageService.saveStoreData(storeData);
         debugPrint('💾 Store data saved to local storage');
       }
-      
+
       debugPrint('✅ User data loading completed successfully');
     } catch (e) {
       debugPrint('❌ Error in loadUserDataAfterLogin: $e');
@@ -277,11 +297,17 @@ class SupabaseService {
 
   // Check if user is authenticated
   static Future<bool> isUserAuthenticated() async {
+    debugPrint('🔐 [SupabaseService] Checking user authentication...');
     try {
       final user = client.auth.currentUser;
-      return user != null;
+      final isAuthenticated = user != null;
+      debugPrint('🔐 [SupabaseService] User authenticated: $isAuthenticated');
+      if (isAuthenticated) {
+        debugPrint('👤 [SupabaseService] User email: ${user.email}');
+      }
+      return isAuthenticated;
     } catch (e) {
-      // Error checking user authentication: $e
+      debugPrint('❌ [SupabaseService] Error checking user authentication: $e');
       return false;
     }
   }

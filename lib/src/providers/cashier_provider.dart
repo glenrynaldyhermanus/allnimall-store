@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:allnimall_store/src/core/config/app_config.dart';
 import 'package:allnimall_store/src/data/objects/cart_item.dart';
 import 'package:allnimall_store/src/data/objects/product.dart';
@@ -92,7 +93,8 @@ final addToCartUseCaseProvider = Provider<AddToCartUseCase>((ref) {
   return AddToCartUseCase(posRepository);
 });
 
-final updateCartQuantityUseCaseProvider = Provider<UpdateCartQuantityUseCase>((ref) {
+final updateCartQuantityUseCaseProvider =
+    Provider<UpdateCartQuantityUseCase>((ref) {
   final posRepository = ref.read(posRepositoryProvider);
   return UpdateCartQuantityUseCase(posRepository);
 });
@@ -109,16 +111,25 @@ class CashierNotifier extends StateNotifier<CashierState> {
   CashierNotifier(this.ref) : super(CashierInitial());
 
   Future<void> loadProducts() async {
+    debugPrint('🔄 [CashierProvider] Starting loadProducts...');
     state = CashierLoading();
     try {
       final getProductsUseCase = ref.read(getProductsUseCaseProvider);
       final getCartUseCase = ref.read(getCartUseCaseProvider);
-      
+
+      debugPrint('🔄 [CashierProvider] Loading products...');
       final products = await getProductsUseCase();
+      debugPrint(
+          '🔄 [CashierProvider] Products loaded: ${products.length} items');
+
+      debugPrint('🛒 [CashierProvider] Loading cart...');
       final cartItems = await getCartUseCase();
+      debugPrint('🛒 [CashierProvider] Cart loaded: ${cartItems.length} items');
+
       final sortedCartItems = _sortCartItems(cartItems);
       final totals = _calculateTotals(sortedCartItems);
 
+      debugPrint('✅ [CashierProvider] Setting CashierLoaded state...');
       state = CashierLoaded(
         products: products,
         cartItems: sortedCartItems,
@@ -127,45 +138,86 @@ class CashierNotifier extends StateNotifier<CashierState> {
         discount: totals['discount']!,
         finalTotal: totals['finalTotal']!,
       );
+      debugPrint('✅ [CashierProvider] State updated successfully');
     } catch (e) {
+      debugPrint('❌ [CashierProvider] Error in loadProducts: $e');
       state = CashierError(e.toString());
     }
   }
 
   Future<void> loadCart() async {
-    if (state is CashierLoaded) {
-      final currentState = state as CashierLoaded;
-      try {
-        final getCartUseCase = ref.read(getCartUseCaseProvider);
-        final cartItems = await getCartUseCase();
-        final sortedCartItems = _sortCartItems(cartItems);
-        final totals = _calculateTotals(sortedCartItems);
-
-        state = currentState.copyWith(
-          cartItems: sortedCartItems,
-          total: totals['total']!,
-          tax: totals['tax']!,
-          discount: totals['discount']!,
-          finalTotal: totals['finalTotal']!,
-        );
-      } catch (e) {
-        state = CashierError(e.toString());
+    debugPrint('🛒 [CashierProvider] Starting loadCart...');
+    try {
+      // If state is initial, load products first
+      if (state is CashierInitial) {
+        debugPrint(
+            '🔄 [CashierProvider] State is initial, loading products first...');
+        await loadProducts();
+        return;
       }
+
+      if (state is CashierLoaded) {
+        debugPrint('🔄 [CashierProvider] State is loaded, updating cart...');
+        final currentState = state as CashierLoaded;
+        try {
+          final getCartUseCase = ref.read(getCartUseCaseProvider);
+          debugPrint('🛒 [CashierProvider] Loading cart items...');
+          final cartItems = await getCartUseCase();
+          debugPrint(
+              '🛒 [CashierProvider] Cart items loaded: ${cartItems.length} items');
+
+          final sortedCartItems = _sortCartItems(cartItems);
+          final totals = _calculateTotals(sortedCartItems);
+
+          debugPrint(
+              '✅ [CashierProvider] Updating state with new cart data...');
+          state = currentState.copyWith(
+            cartItems: sortedCartItems,
+            total: totals['total']!,
+            tax: totals['tax']!,
+            discount: totals['discount']!,
+            finalTotal: totals['finalTotal']!,
+          );
+          debugPrint('✅ [CashierProvider] State updated successfully');
+        } catch (e) {
+          debugPrint('❌ [CashierProvider] Error updating cart: $e');
+          state = CashierError(e.toString());
+        }
+      } else {
+        debugPrint(
+            '🔄 [CashierProvider] State is not loaded, loading products first...');
+        // If state is not loaded, load products first
+        await loadProducts();
+      }
+    } catch (e) {
+      debugPrint('❌ [CashierProvider] Error in loadCart: $e');
+      state = CashierError(e.toString());
     }
   }
 
   Future<void> addToCart(String productId, int quantity) async {
+    debugPrint(
+        '🛒 [CashierProvider] addToCart called with productId: $productId, quantity: $quantity');
+
     if (state is CashierLoaded) {
       final currentState = state as CashierLoaded;
       try {
         final addToCartUseCase = ref.read(addToCartUseCaseProvider);
         final getCartUseCase = ref.read(getCartUseCaseProvider);
-        
+
+        debugPrint('🛒 [CashierProvider] Calling addToCartUseCase...');
         await addToCartUseCase(productId, quantity);
+        debugPrint('🛒 [CashierProvider] Product added to cart successfully');
+
+        debugPrint('🛒 [CashierProvider] Loading updated cart...');
         final cartItems = await getCartUseCase();
+        debugPrint(
+            '🛒 [CashierProvider] Cart loaded with ${cartItems.length} items');
+
         final sortedCartItems = _sortCartItems(cartItems);
         final totals = _calculateTotals(sortedCartItems);
 
+        debugPrint('✅ [CashierProvider] Updating state with new cart data...');
         state = currentState.copyWith(
           cartItems: sortedCartItems,
           total: totals['total']!,
@@ -173,9 +225,14 @@ class CashierNotifier extends StateNotifier<CashierState> {
           discount: totals['discount']!,
           finalTotal: totals['finalTotal']!,
         );
+        debugPrint('✅ [CashierProvider] State updated successfully');
       } catch (e) {
+        debugPrint('❌ [CashierProvider] Error in addToCart: $e');
         state = CashierError(e.toString());
       }
+    } else {
+      debugPrint(
+          '❌ [CashierProvider] State is not CashierLoaded, current state: ${state.runtimeType}');
     }
   }
 
@@ -183,9 +240,10 @@ class CashierNotifier extends StateNotifier<CashierState> {
     if (state is CashierLoaded) {
       final currentState = state as CashierLoaded;
       try {
-        final updateCartQuantityUseCase = ref.read(updateCartQuantityUseCaseProvider);
+        final updateCartQuantityUseCase =
+            ref.read(updateCartQuantityUseCaseProvider);
         final getCartUseCase = ref.read(getCartUseCaseProvider);
-        
+
         await updateCartQuantityUseCase(productId, quantity);
         final cartItems = await getCartUseCase();
         final sortedCartItems = _sortCartItems(cartItems);
@@ -210,7 +268,7 @@ class CashierNotifier extends StateNotifier<CashierState> {
       try {
         final clearCartUseCase = ref.read(clearCartUseCaseProvider);
         final getCartUseCase = ref.read(getCartUseCaseProvider);
-        
+
         await clearCartUseCase();
         final cartItems = await getCartUseCase();
         final sortedCartItems = _sortCartItems(cartItems);
@@ -264,6 +322,7 @@ class CashierNotifier extends StateNotifier<CashierState> {
 }
 
 // Cashier Provider
-final cashierProvider = StateNotifierProvider<CashierNotifier, CashierState>((ref) {
+final cashierProvider =
+    StateNotifierProvider<CashierNotifier, CashierState>((ref) {
   return CashierNotifier(ref);
-}); 
+});

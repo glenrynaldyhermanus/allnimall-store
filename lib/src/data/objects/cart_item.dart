@@ -1,4 +1,5 @@
 import 'product.dart';
+import 'package:allnimall_store/src/core/utils/number_formatter.dart';
 
 class CartItem {
   final String id;
@@ -37,4 +38,8 @@ class CartItem {
   }
 
   double get totalPrice => product.price * quantity;
+  
+  // Helper methods for formatted display
+  String get formattedTotalPrice => NumberFormatter.formatTotalPrice(totalPrice);
+  String get formattedQuantity => NumberFormatter.formatQuantity(quantity);
 }

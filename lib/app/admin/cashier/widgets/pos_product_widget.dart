@@ -11,12 +11,7 @@ import 'package:allnimall_store/src/providers/management_provider.dart';
 import 'package:allnimall_store/src/core/services/local_storage_service.dart';
 
 class PosProductWidget extends ConsumerStatefulWidget {
-  final VoidCallback? onCartUpdated;
-
-  const PosProductWidget({
-    super.key,
-    this.onCartUpdated,
-  });
+  const PosProductWidget({super.key});
 
   @override
   ConsumerState<PosProductWidget> createState() => _PosProductWidgetState();
@@ -128,37 +123,14 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
 
   Future<void> _addToCartWithAPI(Product product) async {
     try {
+      debugPrint(
+          '🛒 [PosProductWidget] Adding product ${product.name} to cart...');
+
       // Use cashier provider to add to cart
       await ref.read(cashierProvider.notifier).addToCart(product.id, 1);
-
-      // Call callback to refresh cart
-      widget.onCartUpdated?.call();
-
-      // Show success toast
-      if (mounted) {
-        showToast(
-          context: context,
-          builder: (context, overlay) {
-            return SurfaceCard(
-              child: Basic(
-                title: const Text('Berhasil'),
-                content: Text('${product.name} ditambahkan ke keranjang'),
-                trailing: SizedBox(
-                  height: 32,
-                  child: AllnimallButton.ghost(
-                    onPressed: () => overlay.close(),
-                    child: const Text(
-                      'Tutup',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      }
+      debugPrint('🛒 [PosProductWidget] Product added to cart successfully');
     } catch (e) {
+      debugPrint('❌ [PosProductWidget] Error adding to cart: $e');
       // Show error toast
       if (mounted) {
         showToast(
@@ -472,11 +444,11 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                                   const SizedBox(height: 8),
                                   Text(product.name).semiBold(),
                                   const SizedBox(height: 4),
-                                  Text('Rp ${product.price.toStringAsFixed(0)}')
+                                  Text(product.formattedPrice)
                                       .muted()
                                       .small(),
                                   const SizedBox(height: 4),
-                                  Text('Stok: ${product.stock}')
+                                  Text('Stok: ${product.formattedStock}')
                                       .muted()
                                       .xSmall(),
                                   const SizedBox(height: 8),

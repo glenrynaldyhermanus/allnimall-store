@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:allnimall_store/src/core/utils/number_formatter.dart';
 
 class Product {
   final String id;
@@ -143,4 +144,13 @@ class Product {
       'category_name': categoryName,
     };
   }
+
+  // Helper methods for formatted display
+  String get formattedPrice => NumberFormatter.formatPrice(price);
+  String get formattedPurchasePrice =>
+      NumberFormatter.formatPrice(purchasePrice);
+  String get formattedStock => NumberFormatter.formatStock(stock);
+  String get formattedWeight =>
+      NumberFormatter.formatWeight(weightGrams.toDouble());
+  String get formattedDiscount => NumberFormatter.formatDiscount(discountValue);
 }

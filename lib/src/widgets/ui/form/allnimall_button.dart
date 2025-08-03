@@ -257,10 +257,7 @@ class _AllnimallButtonState extends State<AllnimallButton>
                 child: GestureDetector(
                   onTap: widget.onPressed != null ? _handleTap : null,
                   behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    width: double.infinity,
-                    height: double.infinity,
-                    alignment: Alignment.center,
+                  child: Center(
                     child: widget.isLoading
                         ? const SizedBox(
                             width: 20,

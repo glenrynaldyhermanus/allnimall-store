@@ -451,7 +451,7 @@ CREATE TABLE public.store_payment_methods (
 -- SALES SYSTEM
 -- ========================================
 
--- store_carts
+-- store_carts (cart header)
 CREATE TABLE public.store_carts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
@@ -460,13 +460,27 @@ CREATE TABLE public.store_carts (
     updated_by UUID,
     deleted_at TIMESTAMP WITH TIME ZONE,
     store_id UUID NOT NULL,
-    product_id UUID NOT NULL,
-    quantity SMALLINT NOT NULL DEFAULT 1,
     session_id TEXT, -- for anonymous sessions
     customer_id UUID, -- for logged in customers
+    status TEXT NOT NULL DEFAULT 'active', -- 'active', 'completed', 'abandoned'
     FOREIGN KEY (store_id) REFERENCES public.stores(id),
-    FOREIGN KEY (product_id) REFERENCES public.products(id),
     FOREIGN KEY (customer_id) REFERENCES public.customers(id)
+);
+
+-- store_cart_items (cart items)
+CREATE TABLE public.store_cart_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    created_by UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    updated_by UUID,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    cart_id UUID NOT NULL,
+    product_id UUID NOT NULL,
+    quantity SMALLINT NOT NULL DEFAULT 1,
+    unit_price NUMERIC NOT NULL DEFAULT 0,
+    FOREIGN KEY (cart_id) REFERENCES public.store_carts(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES public.products(id)
 );
 
 -- sales

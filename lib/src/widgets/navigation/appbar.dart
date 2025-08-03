@@ -132,6 +132,7 @@ class _AllnimallAppBarState extends ConsumerState<AllnimallAppBar> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
+        color: Colors.white,
         border: Border(
           bottom: BorderSide(color: Colors.slate[100]),
         ),
