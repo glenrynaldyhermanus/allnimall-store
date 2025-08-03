@@ -1,17 +1,21 @@
-import 'package:flutter/material.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:allnimall_store/src/widgets/guards/auth_guard.dart';
+import 'package:allnimall_store/src/widgets/navigation/appbar.dart';
 
 class ManagementPage extends StatelessWidget {
   const ManagementPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return AuthGuard(
+    return const AuthGuard(
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Management'),
-        ),
-        body: const Center(
+        headers: [
+          AllnimallAppBar(
+            title: 'Management',
+            subtitle: 'Kelola Produk dan Kategori',
+          ),
+        ],
+        child: Center(
           child: Text('Management Page - Protected by AuthGuard'),
         ),
       ),

@@ -1,18 +1,16 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:allnimall_store/src/data/objects/product.dart';
 import 'package:allnimall_store/src/widgets/ui/form/allnimall_text_input.dart';
 import 'package:allnimall_store/src/widgets/ui/form/allnimall_select.dart';
 import 'package:allnimall_store/src/widgets/ui/form/allnimall_button.dart';
 import 'package:allnimall_store/src/widgets/ui/feedback/product_loading.dart';
-import 'package:allnimall_store/src/data/usecases/get_all_products_usecase.dart';
-import 'package:allnimall_store/src/data/usecases/add_to_cart_usecase.dart';
+import 'package:allnimall_store/src/providers/cashier_provider.dart';
+import 'package:allnimall_store/src/providers/management_provider.dart';
 import 'package:allnimall_store/src/core/services/local_storage_service.dart';
-import 'package:allnimall_store/src/data/repositories/management_repository_impl.dart';
-import 'package:allnimall_store/src/data/repositories/pos_repository_impl.dart';
-import 'package:allnimall_store/src/core/services/supabase_service.dart';
 
-class PosProductWidget extends StatefulWidget {
+class PosProductWidget extends ConsumerStatefulWidget {
   final VoidCallback? onCartUpdated;
 
   const PosProductWidget({
@@ -21,10 +19,10 @@ class PosProductWidget extends StatefulWidget {
   });
 
   @override
-  State<PosProductWidget> createState() => _PosProductWidgetState();
+  ConsumerState<PosProductWidget> createState() => _PosProductWidgetState();
 }
 
-class _PosProductWidgetState extends State<PosProductWidget> {
+class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
   // Products State
   List<Product> products = [];
   bool isLoadingProducts = true;
@@ -66,12 +64,7 @@ class _PosProductWidgetState extends State<PosProductWidget> {
     });
 
     try {
-      // Check Supabase connection
-
       // Check if user is authenticated
-
-      final managementRepository =
-          ManagementRepositoryImpl(SupabaseService.client);
 
       // Get store ID and local storage data
       final storeId = await LocalStorageService.getStoreId();
@@ -80,17 +73,24 @@ class _PosProductWidgetState extends State<PosProductWidget> {
         throw Exception('Store ID not found in local storage');
       }
 
-      final getAllProductsUseCase = GetAllProductsUseCase(managementRepository);
+      // Use management provider to load products
+      await ref.read(managementProvider.notifier).loadProducts();
 
-      final productsList = await getAllProductsUseCase.execute();
-
-      if (mounted) {
-        setState(() {
-          products = productsList;
-          isLoadingProducts = false;
-        });
-        _updateCategories();
-        _filterProducts();
+      // Get products from management state
+      final managementState = ref.read(managementProvider);
+      if (managementState is ProductsLoaded) {
+        if (mounted) {
+          setState(() {
+            products = managementState.products;
+            isLoadingProducts = false;
+          });
+          _updateCategories();
+          _filterProducts();
+        }
+      } else if (managementState is ManagementError) {
+        throw Exception(managementState.message);
+      } else {
+        throw Exception('Failed to load products');
       }
     } catch (e) {
       if (mounted) {
@@ -128,10 +128,8 @@ class _PosProductWidgetState extends State<PosProductWidget> {
 
   Future<void> _addToCartWithAPI(Product product) async {
     try {
-      final posRepository = PosRepositoryImpl(SupabaseService.client);
-      final addToCartUseCase = AddToCartUseCase(posRepository);
-
-      await addToCartUseCase.call(product.id, 1);
+      // Use cashier provider to add to cart
+      await ref.read(cashierProvider.notifier).addToCart(product.id, 1);
 
       // Call callback to refresh cart
       widget.onCartUpdated?.call();
@@ -202,13 +200,12 @@ class _PosProductWidgetState extends State<PosProductWidget> {
 
     // Prevent unnecessary setState calls
     final newFilteredProducts = products.where((product) {
-      final matchesSearch =
-          product.name.toLowerCase().contains(searchQuery) ||
-              (product.code?.toLowerCase().contains(searchQuery) ?? false) ||
-              (product.barcode?.toLowerCase().contains(searchQuery) ?? false);
+      final matchesSearch = product.name.toLowerCase().contains(searchQuery) ||
+          (product.code?.toLowerCase().contains(searchQuery) ?? false) ||
+          (product.barcode?.toLowerCase().contains(searchQuery) ?? false);
 
-      final matchesCategory = selectedCategory == null ||
-          product.categoryName == selectedCategory;
+      final matchesCategory =
+          selectedCategory == null || product.categoryName == selectedCategory;
 
       return matchesSearch && matchesCategory;
     }).toList();
@@ -280,6 +277,48 @@ class _PosProductWidgetState extends State<PosProductWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Listen to management state changes
+    ref.listen<ManagementState>(managementProvider, (previous, next) {
+      if (next is ProductsLoaded) {
+        setState(() {
+          products = next.products;
+          isLoadingProducts = false;
+        });
+        _updateCategories();
+        _filterProducts();
+      } else if (next is ManagementError) {
+        setState(() {
+          isLoadingProducts = false;
+        });
+        // Show error toast
+        showToast(
+          context: context,
+          builder: (context, overlay) {
+            return SurfaceCard(
+              child: Basic(
+                title: const Text('Error'),
+                content: Text('Gagal memuat produk: ${next.message}'),
+                trailing: SizedBox(
+                  height: 32,
+                  child: AllnimallButton.ghost(
+                    onPressed: () => overlay.close(),
+                    child: const Text(
+                      'Tutup',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      } else if (next is ManagementLoading) {
+        setState(() {
+          isLoadingProducts = true;
+        });
+      }
+    });
+
     return Column(
       children: [
         // Search and Filter Section
