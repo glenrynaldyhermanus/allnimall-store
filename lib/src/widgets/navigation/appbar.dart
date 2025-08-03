@@ -173,21 +173,19 @@ class _AllnimallAppBarState extends ConsumerState<AllnimallAppBar> {
                         ),
                       ).small(),
                       const Gap(4),
-                      Text(
+                      const Text(
                         '|',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
                         ),
-                      ),
+                      ).small,
                       const Gap(4),
                       Text(
                         userRole,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
                         ),
-                      ),
+                      ).small,
                     ],
                   ),
                   const Gap(8),
