@@ -254,17 +254,17 @@ class ManagementRepositoryImpl implements ManagementRepository {
   @override
   Future<List<Map<String, dynamic>>> getSuppliers() async {
     try {
-      final businessData = await LocalStorageService.getBusinessData();
-      final businessId = businessData?['id'];
-      if (businessId == null) {
-        throw Exception('Business ID not found');
+      final storeId = await LocalStorageService.getStoreId();
+      if (storeId == null) {
+        throw Exception('Store ID not found');
       }
 
       final response = await _supabaseClient
           .from('suppliers')
           .select('*')
-          .eq('business_id', businessId)
-          .order('name', ascending: true);
+          .eq('store_id', storeId)
+          .eq('is_active', true)
+          .order('created_at', ascending: false);
 
       return List<Map<String, dynamic>>.from(response);
     } catch (e) {
@@ -275,18 +275,17 @@ class ManagementRepositoryImpl implements ManagementRepository {
   @override
   Future<void> createSupplier(Map<String, dynamic> supplierData) async {
     try {
-      final businessData = await LocalStorageService.getBusinessData();
-      final businessId = businessData?['id'];
-      if (businessId == null) {
-        throw Exception('Business ID not found');
+      final storeId = await LocalStorageService.getStoreId();
+      if (storeId == null) {
+        throw Exception('Store ID not found');
       }
 
-      final supplierDataWithBusiness = {
+      final supplierDataWithStore = {
         ...supplierData,
-        'business_id': businessId,
+        'store_id': storeId,
       };
 
-      await _supabaseClient.from('suppliers').insert(supplierDataWithBusiness);
+      await _supabaseClient.from('suppliers').insert(supplierDataWithStore);
     } catch (e) {
       throw Exception('Failed to create supplier');
     }

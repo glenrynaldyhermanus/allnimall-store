@@ -1,10 +1,11 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
+import 'package:flutter/gestures.dart';
 
 class AllnimallTable extends StatelessWidget {
   final List<TableRow> rows;
   final List<TableCell> headers;
   final bool showHeader;
-  final bool resizable;
+  final bool scrollable;
   final double? minWidth;
   final double? maxWidth;
   final double? minHeight;
@@ -13,13 +14,14 @@ class AllnimallTable extends StatelessWidget {
   final BorderRadius? borderRadius;
   final Color? backgroundColor;
   final Color? borderColor;
+  final double? defaultRowHeight;
 
   const AllnimallTable({
     super.key,
     required this.rows,
     this.headers = const [],
     this.showHeader = true,
-    this.resizable = true,
+    this.scrollable = true,
     this.minWidth,
     this.maxWidth,
     this.minHeight,
@@ -28,6 +30,7 @@ class AllnimallTable extends StatelessWidget {
     this.borderRadius,
     this.backgroundColor,
     this.borderColor,
+    this.defaultRowHeight,
   });
 
   @override
@@ -49,22 +52,43 @@ class AllnimallTable extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: resizable ? _buildResizableTable() : _buildBasicTable(),
+      child: scrollable ? _buildScrollableTable() : _buildBasicTable(),
     );
   }
 
-  Widget _buildResizableTable() {
-    return ResizableTable(
-      controller: ResizableTableController(
-        defaultColumnWidth: 150,
-        defaultRowHeight: 40,
-        defaultHeightConstraint: const ConstrainedTableSize(min: 40),
-        defaultWidthConstraint: const ConstrainedTableSize(min: 80),
+  Widget _buildScrollableTable() {
+    return Builder(
+      builder: (context) => ScrollConfiguration(
+        behavior: ScrollConfiguration.of(context).copyWith(
+          dragDevices: {
+            PointerDeviceKind.touch,
+            PointerDeviceKind.mouse,
+          },
+          overscroll: false,
+        ),
+        child: SizedBox(
+          height: minHeight ?? 400,
+          child: OutlinedContainer(
+            child: ScrollableClient(
+              diagonalDragBehavior: DiagonalDragBehavior.free,
+              builder: (context, offset, viewportSize, child) {
+                return Table(
+                  horizontalOffset: offset.dx,
+                  verticalOffset: offset.dy,
+                  viewportSize: viewportSize,
+                  defaultColumnWidth: const FixedTableSize(150),
+                  defaultRowHeight: FixedTableSize(defaultRowHeight ?? 60),
+                  rows: [
+                    if (showHeader && headers.isNotEmpty)
+                      TableHeader(cells: headers),
+                    ...rows,
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
       ),
-      rows: [
-        if (showHeader && headers.isNotEmpty) TableHeader(cells: headers),
-        ...rows,
-      ],
     );
   }
 
@@ -86,6 +110,8 @@ class AllnimallTableCell {
   final EdgeInsets? padding;
   final Color? backgroundColor;
   final TextStyle? textStyle;
+  final bool expanded;
+  final double? width;
 
   const AllnimallTableCell({
     required this.child,
@@ -94,6 +120,8 @@ class AllnimallTableCell {
     this.padding,
     this.backgroundColor,
     this.textStyle,
+    this.expanded = true,
+    this.width,
   });
 
   TableCell build(BuildContext context) {
@@ -112,22 +140,46 @@ class AllnimallTableCell {
             ),
           ),
         ),
-        child: isHeader
-            ? DefaultTextStyle(
-                style: (textStyle ??
-                        const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600))
-                    .copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: theme.colorScheme.foreground,
-                ),
-                child: child,
-              )
-            : DefaultTextStyle(
-                style: (textStyle ?? const TextStyle(fontSize: 14)).copyWith(
-                  color: theme.colorScheme.foreground,
-                ),
-                child: child,
+        child: expanded
+            ? (isHeader
+                ? DefaultTextStyle(
+                    style: (textStyle ??
+                            const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.w600))
+                        .copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.foreground,
+                    ),
+                    child: child,
+                  )
+                : DefaultTextStyle(
+                    style:
+                        (textStyle ?? const TextStyle(fontSize: 12)).copyWith(
+                      color: theme.colorScheme.foreground,
+                    ),
+                    child: child,
+                  ))
+            : SizedBox(
+                width: width ??
+                    100, // Default width untuk cell yang tidak expanded
+                child: isHeader
+                    ? DefaultTextStyle(
+                        style: (textStyle ??
+                                const TextStyle(
+                                    fontSize: 14, fontWeight: FontWeight.w600))
+                            .copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.foreground,
+                        ),
+                        child: child,
+                      )
+                    : DefaultTextStyle(
+                        style: (textStyle ?? const TextStyle(fontSize: 12))
+                            .copyWith(
+                          color: theme.colorScheme.foreground,
+                        ),
+                        child: child,
+                      ),
               ),
       ),
     );

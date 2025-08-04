@@ -156,8 +156,10 @@ class _AllnimallAppBarState extends ConsumerState<AllnimallAppBar> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
+                border:
+                    Border.all(color: Theme.of(context).colorScheme.primary),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -168,23 +170,23 @@ class _AllnimallAppBarState extends ConsumerState<AllnimallAppBar> {
                     children: [
                       Text(
                         _getFirstName(userName),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ).small(),
                       const Gap(4),
-                      const Text(
+                      Text(
                         '|',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ).small,
                       const Gap(4),
                       Text(
                         userRole,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ).small,
                     ],
@@ -194,15 +196,15 @@ class _AllnimallAppBarState extends ConsumerState<AllnimallAppBar> {
                   Container(
                     width: 24,
                     height: 24,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
                         _getInitials(userName),
                         style: const TextStyle(
-                          color: Colors.black,
+                          color: Colors.white,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),

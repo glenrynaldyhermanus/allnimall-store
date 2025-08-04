@@ -1,18 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Helper function untuk menggunakan system font
-TextStyle _getSystemFont({
-  required double fontSize,
-  FontWeight? fontWeight,
-  Color? color,
-}) {
-  return TextStyle(
-    fontSize: fontSize,
-    fontWeight: fontWeight,
-    color: color,
-  );
-}
-
 class AppColors {
   // Allnimall Brand Colors - Purple & Pink Theme
   static const Color primary = Color(0xFF3A3D71); // Purple
@@ -61,77 +48,77 @@ class AppTheme {
         onError: Colors.white,
       ),
       textTheme: const TextTheme().copyWith(
-        displayLarge: _getSystemFont(
+        displayLarge: TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: AppColors.primaryText,
         ),
-        displayMedium: _getSystemFont(
+        displayMedium: TextStyle(
           fontSize: 28,
           fontWeight: FontWeight.bold,
           color: AppColors.primaryText,
         ),
-        displaySmall: _getSystemFont(
+        displaySmall: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppColors.primaryText,
         ),
-        headlineLarge: _getSystemFont(
+        headlineLarge: TextStyle(
           fontSize: 22,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryText,
         ),
-        headlineMedium: _getSystemFont(
+        headlineMedium: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryText,
         ),
-        headlineSmall: _getSystemFont(
+        headlineSmall: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryText,
         ),
-        titleLarge: _getSystemFont(
+        titleLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryText,
         ),
-        titleMedium: _getSystemFont(
+        titleMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.primaryText,
         ),
-        titleSmall: _getSystemFont(
+        titleSmall: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.secondaryText,
         ),
-        bodyLarge: _getSystemFont(
+        bodyLarge: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.normal,
           color: AppColors.primaryText,
         ),
-        bodyMedium: _getSystemFont(
+        bodyMedium: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.normal,
           color: AppColors.primaryText,
         ),
-        bodySmall: _getSystemFont(
+        bodySmall: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.normal,
           color: AppColors.secondaryText,
         ),
-        labelLarge: _getSystemFont(
+        labelLarge: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w500,
           color: AppColors.primaryText,
         ),
-        labelMedium: _getSystemFont(
+        labelMedium: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
           color: AppColors.secondaryText,
         ),
-        labelSmall: _getSystemFont(
+        labelSmall: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w500,
           color: AppColors.secondaryText,
@@ -147,7 +134,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(16),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          textStyle: _getSystemFont(
+          textStyle: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -161,7 +148,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(16),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          textStyle: _getSystemFont(
+          textStyle: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -174,7 +161,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(16),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-          textStyle: _getSystemFont(
+          textStyle: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -205,7 +192,7 @@ class AppTheme {
         ),
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        hintStyle: _getSystemFont(
+        hintStyle: TextStyle(
           fontSize: 14,
           color: AppColors.mutedForeground,
         ),
@@ -224,7 +211,7 @@ class AppTheme {
         foregroundColor: AppColors.primaryText,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: _getSystemFont(
+        titleTextStyle: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryText,

@@ -61,6 +61,10 @@ dependencies:
   uuid: ^4.2.1
   package_info_plus: ^8.0.2
 
+  # Image & File Picker
+  image_picker: ^1.0.7
+  file_picker: ^6.1.1
+
   #UI
   shadcn_flutter: ^0.0.37
   gap: ^3.0.1
