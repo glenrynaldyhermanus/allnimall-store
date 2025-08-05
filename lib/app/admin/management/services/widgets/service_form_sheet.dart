@@ -111,15 +111,13 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
         'code': _codeController.text.trim().isEmpty
             ? null
             : _codeController.text.trim(),
-        'category': _categoryController.text.trim().isEmpty
-            ? null
-            : _categoryController.text.trim(),
         'price': double.tryParse(_priceController.text) ?? 0.0,
         'purchase_price': 0.0, // Services don't have purchase price
         'stock': 0, // Services don't have stock
         'unit': 'session', // Default unit for services
-        'weight': 0.0, // Services don't have weight
-        'discount': double.tryParse(_discountController.text) ?? 0.0,
+        'weight_grams': 0, // Services don't have weight
+        'discount_type': 1, // 1=none, 2=percentage, 3=fixed
+        'discount_value': double.tryParse(_discountController.text) ?? 0.0,
         'description': _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
@@ -140,10 +138,7 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
         await SupabaseService.createProduct(productData);
       }
 
-      // Close sheet
-      shadcn.closeSheet(context);
-
-      // Show success toast
+      // Show success toast first
       if (mounted) {
         shadcn.showToast(
           context: context,
@@ -161,6 +156,11 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
           ),
           location: shadcn.ToastLocation.topCenter,
         );
+      }
+
+      // Close sheet after showing toast
+      if (mounted) {
+        shadcn.closeSheet(context);
       }
     } catch (e) {
       // Show error toast
