@@ -1,30 +1,34 @@
-import 'product.dart';
 import 'package:allnimall_store/src/core/utils/number_formatter.dart';
 
-enum ProductType {
+enum SalesItemType {
   product('product'),
   service('service');
 
-  const ProductType(this.value);
+  const SalesItemType(this.value);
   final String value;
 
-  static ProductType? fromString(String? value) {
+  static SalesItemType? fromString(String? value) {
     if (value == null) return null;
-    return ProductType.values.firstWhere(
+    return SalesItemType.values.firstWhere(
       (type) => type.value == value,
-      orElse: () => ProductType.product,
+      orElse: () => SalesItemType.product,
     );
   }
 }
 
-class CartItem {
+class SalesItem {
   final String id;
-  final Product product;
-  final ProductType productType;
+  final String saleId;
+  final String productId;
+  final String productName;
+  final SalesItemType itemType;
   final int quantity;
-  final String storeId;
+  final double unitPrice;
+  final double totalAmount;
+  final double discountAmount;
+  final double taxAmount;
   final DateTime createdAt;
-  
+
   // Service-specific fields
   final DateTime? bookingDate;
   final String? bookingTime;
@@ -34,12 +38,17 @@ class CartItem {
   final String? customerNotes;
   final String? bookingReference;
 
-  CartItem({
+  SalesItem({
     required this.id,
-    required this.product,
-    this.productType = ProductType.product,
+    required this.saleId,
+    required this.productId,
+    required this.productName,
+    this.itemType = SalesItemType.product,
     required this.quantity,
-    required this.storeId,
+    required this.unitPrice,
+    required this.totalAmount,
+    this.discountAmount = 0,
+    this.taxAmount = 0,
     required this.createdAt,
     this.bookingDate,
     this.bookingTime,
@@ -50,17 +59,23 @@ class CartItem {
     this.bookingReference,
   });
 
-  factory CartItem.fromJson(Map<String, dynamic> json) {
-    return CartItem(
+  factory SalesItem.fromJson(Map<String, dynamic> json) {
+    return SalesItem(
       id: json['id'] ?? '',
-      product: Product.fromJson(json['products'] ?? {}),
-      productType: ProductType.fromString(json['item_type']) ?? ProductType.product,
+      saleId: json['sale_id'] ?? '',
+      productId: json['product_id'] ?? '',
+      productName: json['product_name'] ?? '',
+      itemType:
+          SalesItemType.fromString(json['item_type']) ?? SalesItemType.product,
       quantity: json['quantity'] ?? 1,
-      storeId: json['store_id'] ?? '',
+      unitPrice: (json['unit_price'] ?? 0).toDouble(),
+      totalAmount: (json['total_amount'] ?? 0).toDouble(),
+      discountAmount: (json['discount_amount'] ?? 0).toDouble(),
+      taxAmount: (json['tax_amount'] ?? 0).toDouble(),
       createdAt: DateTime.parse(
           json['created_at'] ?? DateTime.now().toIso8601String()),
       // Service-specific fields
-      bookingDate: json['booking_date'] != null 
+      bookingDate: json['booking_date'] != null
           ? DateTime.parse(json['booking_date'])
           : null,
       bookingTime: json['booking_time'],
@@ -75,10 +90,15 @@ class CartItem {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'product_id': product.id,
-      'item_type': productType.value,
+      'sale_id': saleId,
+      'product_id': productId,
+      'product_name': productName,
+      'item_type': itemType.value,
       'quantity': quantity,
-      'store_id': storeId,
+      'unit_price': unitPrice,
+      'total_amount': totalAmount,
+      'discount_amount': discountAmount,
+      'tax_amount': taxAmount,
       'created_at': createdAt.toIso8601String(),
       // Service-specific fields
       'booking_date': bookingDate?.toIso8601String().split('T')[0],
@@ -91,28 +111,27 @@ class CartItem {
     };
   }
 
-  double get totalPrice => product.price * quantity;
-  
-  // Helper methods for formatted display
-  String get formattedTotalPrice => NumberFormatter.formatTotalPrice(totalPrice);
+  // Helper methods
+  bool get isService => itemType == SalesItemType.service;
+  bool get isProduct => itemType == SalesItemType.product;
+
+  String get formattedUnitPrice => NumberFormatter.formatTotalPrice(unitPrice);
+  String get formattedTotalAmount =>
+      NumberFormatter.formatTotalPrice(totalAmount);
   String get formattedQuantity => NumberFormatter.formatQuantity(quantity);
-  
-  // Service-specific helper methods
-  bool get isService => productType == ProductType.service;
-  bool get isProduct => productType == ProductType.product;
-  
+
   String get bookingInfo {
     if (!isService) return '';
-    
-    final date = bookingDate != null 
+
+    final date = bookingDate != null
         ? '${bookingDate!.day}/${bookingDate!.month}/${bookingDate!.year}'
         : '';
     final time = bookingTime ?? '';
     final staff = assignedStaffName ?? '';
-    
+
     return '$date $time${staff.isNotEmpty ? ' - $staff' : ''}';
   }
-  
+
   String get serviceDuration {
     if (!isService || durationMinutes == null) return '';
     return '${durationMinutes} menit';

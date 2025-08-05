@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widgets/index.dart';
 import 'items/items_content.dart';
 import 'services/services_content.dart';
+import 'bookings/bookings_page.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 class ManagementPage extends ConsumerStatefulWidget {
@@ -85,6 +86,12 @@ class _ManagementPageState extends ConsumerState<ManagementPage> {
       title: 'Loyalty',
       icon: LucideIcons.gift,
       description: 'Program loyalitas pelanggan',
+    ),
+    ManagementMenuItem(
+      id: 'bookings',
+      title: 'Booking',
+      icon: LucideIcons.calendar,
+      description: 'Kelola booking jasa dan appointment',
     ),
   ];
 
@@ -183,6 +190,8 @@ class _ManagementPageState extends ConsumerState<ManagementPage> {
         return const ExpensesContent();
       case 'loyalty':
         return const LoyaltyContent();
+      case 'bookings':
+        return const BookingsPage();
       default:
         return Container();
     }

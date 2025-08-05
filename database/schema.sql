@@ -366,7 +366,7 @@ CREATE TABLE public.products (
     pet_size_recommendation TEXT, -- 'small', 'medium', 'large', 'all'
     -- Business fields
     discount_type INTEGER NOT NULL DEFAULT 1, -- 1=none, 2=percentage, 3=fixed
-    discount_value NUMERIC NOT NULL DEFAULT 0,
+    discount_value NUMERIC NOT NULL DEFAULT 0, -- Discount amount - percentage (if discount_type=2) or fixed amount (if discount_type=3)
     is_active BOOLEAN NOT NULL DEFAULT true,
     is_prescription_required BOOLEAN DEFAULT false,
     shelf_life_days INTEGER,
@@ -1151,3 +1151,567 @@ WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
 ON CONFLICT DO NOTHING;
 
 -- Ready for implementation with Allnimall Unified Customer Architecture! 
+
+-- ========================================
+-- UNIFIED BOOKING SYSTEM
+-- ========================================
+
+-- Tabel untuk partnership merchant dengan Allnimall
+CREATE TABLE public.merchant_partnerships (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    created_by UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    updated_by UUID,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    
+    merchant_id UUID NOT NULL,
+    store_id UUID NOT NULL,
+    partnership_status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'active', 'suspended', 'terminated'
+    partnership_type TEXT NOT NULL DEFAULT 'service_provider', -- 'service_provider', 'product_supplier', 'both'
+    commission_rate NUMERIC DEFAULT 0, -- persentase komisi untuk Allnimall
+    service_areas JSONB, -- area yang dilayani
+    is_featured BOOLEAN DEFAULT false,
+    partnership_start_date DATE,
+    partnership_end_date DATE,
+    
+    FOREIGN KEY (merchant_id) REFERENCES public.merchants(id),
+    FOREIGN KEY (store_id) REFERENCES public.stores(id)
+);
+
+-- Tabel untuk service availability per merchant
+CREATE TABLE public.merchant_service_availability (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    created_by UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    updated_by UUID,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    
+    store_id UUID NOT NULL,
+    service_product_id UUID NOT NULL,
+    day_of_week INTEGER NOT NULL, -- 0=Sunday, 1=Monday, etc.
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    slot_duration_minutes INTEGER DEFAULT 60,
+    max_concurrent_bookings INTEGER DEFAULT 1,
+    is_available BOOLEAN DEFAULT true,
+    
+    FOREIGN KEY (store_id) REFERENCES public.stores(id),
+    FOREIGN KEY (service_product_id) REFERENCES public.products(id)
+);
+
+-- Tabel utama untuk semua jenis booking
+CREATE TABLE public.service_bookings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (now() AT TIME ZONE 'utc'),
+    created_by UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    updated_by UUID,
+    deleted_at TIMESTAMP WITH TIME ZONE,
+    
+    -- Booking source & reference
+    booking_source TEXT NOT NULL, -- 'merchant_online_store', 'allnimall_app', 'offline_store'
+    booking_reference TEXT UNIQUE, -- nomor referensi booking (format: BK-YYYYMMDD-XXXX)
+    
+    -- Customer & Pet (Pet bisa optional)
+    customer_id UUID NOT NULL,
+    pet_id UUID, -- NULL jika tidak ada pet
+    customer_name TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    customer_email TEXT,
+    
+    -- Service & Store
+    store_id UUID NOT NULL,
+    service_product_id UUID NOT NULL,
+    service_name TEXT NOT NULL,
+    
+    -- Appointment details
+    booking_date DATE NOT NULL,
+    booking_time TIME NOT NULL,
+    duration_minutes INTEGER NOT NULL,
+    
+    -- Service location
+    service_type TEXT NOT NULL DEFAULT 'in_store', -- 'in_store', 'on_site'
+    customer_address TEXT, -- untuk on-site service
+    latitude NUMERIC,
+    longitude NUMERIC,
+    
+    -- Status tracking
+    status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'confirmed', 'in_progress', 'completed', 'cancelled', 'no_show'
+    payment_status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'paid', 'refunded'
+    
+    -- Financial
+    service_fee NUMERIC NOT NULL DEFAULT 0,
+    on_site_fee NUMERIC DEFAULT 0,
+    discount_amount NUMERIC DEFAULT 0,
+    total_amount NUMERIC NOT NULL DEFAULT 0,
+    
+    -- Staff assignment
+    assigned_staff_id UUID,
+    staff_notes TEXT,
+    customer_notes TEXT,
+    
+    -- Allnimall specific
+    allnimall_commission NUMERIC DEFAULT 0,
+    partnership_id UUID, -- link ke merchant_partnerships jika dari Allnimall
+    
+    -- Links
+    sale_id UUID, -- link ke sales table
+    
+    FOREIGN KEY (customer_id) REFERENCES public.customers(id),
+    FOREIGN KEY (pet_id) REFERENCES public.pets(id),
+    FOREIGN KEY (store_id) REFERENCES public.stores(id),
+    FOREIGN KEY (service_product_id) REFERENCES public.products(id),
+    FOREIGN KEY (assigned_staff_id) REFERENCES public.users(id),
+    FOREIGN KEY (partnership_id) REFERENCES public.merchant_partnerships(id),
+    FOREIGN KEY (sale_id) REFERENCES public.sales(id)
+);
+
+-- ========================================
+-- CALENDAR-STYLE BOOKING SYSTEM
+-- ========================================
+-- 
+-- FLOW BOOKING SYSTEM:
+-- 1. User pilih tanggal di UI
+-- 2. User tekan tombol "Pilih Time Slot" 
+-- 3. Dialog muncul dengan matrix:
+--    - Baris: Jam operasional (08:00-17:00)
+--    - Kolom: Semua staff yang aktif
+--    - Cell: Status availability per staff per jam (✅/❌)
+-- 4. User pilih jam & staff yang available
+-- 5. User konfirmasi booking
+-- 6. Booking masuk ke cart dengan detail: nama produk, staff, estimasi waktu
+-- 
+-- KEUNGGULAN FLOW INI:
+-- ✅ Tidak perlu pre-generate slot di database
+-- ✅ Otomatis generate 24 jam setiap pilih tanggal
+-- ✅ Cek real-time dari service_bookings
+-- ✅ Seperti Google Calendar
+-- ✅ Tidak ada risiko lupa generate slot
+-- ✅ Fleksibel untuk multiple staff per jam
+-- 
+-- DATA SOURCE:
+-- - service_bookings: Data booking aktual
+-- - users + role_assignments: Data staff aktif
+-- - products: Data service dengan durasi
+-- 
+-- FUNCTION UTAMA:
+-- - get_calendar_slots_with_staff(): Generate matrix jam × staff
+-- - is_staff_available_for_range(): Validasi booking dengan durasi > 1 jam
+
+-- ========================================
+-- BOOKING SYSTEM INDEXES
+-- ========================================
+
+-- Booking indexes
+CREATE INDEX idx_service_bookings_booking_source ON public.service_bookings(booking_source);
+CREATE INDEX idx_service_bookings_booking_reference ON public.service_bookings(booking_reference);
+CREATE INDEX idx_service_bookings_customer_id ON public.service_bookings(customer_id);
+CREATE INDEX idx_service_bookings_store_id ON public.service_bookings(store_id);
+CREATE INDEX idx_service_bookings_service_product_id ON public.service_bookings(service_product_id);
+CREATE INDEX idx_service_bookings_booking_date ON public.service_bookings(booking_date);
+CREATE INDEX idx_service_bookings_status ON public.service_bookings(status);
+CREATE INDEX idx_service_bookings_payment_status ON public.service_bookings(payment_status);
+CREATE INDEX idx_service_bookings_assigned_staff_id ON public.service_bookings(assigned_staff_id);
+
+-- ========================================
+-- CALENDAR-STYLE BOOKING FUNCTIONS
+-- ========================================
+
+-- Function untuk generate matrix jam × staff dengan status availability
+-- Digunakan untuk UI calendar-style booking
+CREATE OR REPLACE FUNCTION get_calendar_slots_with_staff(
+    p_store_id UUID,
+    p_service_product_id UUID,
+    p_booking_date DATE,
+    p_start_hour INTEGER DEFAULT 8,
+    p_end_hour INTEGER DEFAULT 17
+)
+RETURNS TABLE (
+    slot_time TEXT,
+    staff_id UUID,
+    staff_name TEXT,
+    staff_phone TEXT,
+    avatar TEXT,
+    is_available BOOLEAN
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH time_slots AS (
+        SELECT 
+            to_char(
+                (make_time(p_start_hour, 0, 0) + (INTERVAL '1 hour' * generate_series(0, p_end_hour - p_start_hour))
+            ), 'HH24:MI') as slot_time
+    ),
+    all_staff AS (
+        SELECT 
+            u.id as staff_id,
+            u.name as staff_name,
+            u.phone as staff_phone,
+            LEFT(u.name, 2) as avatar
+        FROM public.users u
+        JOIN public.role_assignments ra ON u.id = ra.user_id
+        WHERE ra.store_id = p_store_id
+        AND ra.is_active = true
+        AND u.is_active = true
+    ),
+    bookings AS (
+        SELECT 
+            sb.assigned_staff_id,
+            sb.booking_time,
+            sb.duration_minutes
+        FROM public.service_bookings sb
+        WHERE sb.store_id = p_store_id
+        AND sb.service_product_id = p_service_product_id
+        AND sb.booking_date = p_booking_date
+        AND sb.status NOT IN ('cancelled', 'no_show')
+    )
+    SELECT 
+        ts.slot_time,
+        s.staff_id,
+        s.staff_name,
+        s.staff_phone,
+        s.avatar,
+        -- Cek apakah staff available di jam ts.slot_time
+        NOT EXISTS (
+            SELECT 1 FROM bookings b
+            WHERE b.assigned_staff_id = s.staff_id
+            AND (
+                -- Cek overlap: jam yang dipilih ada di range booking
+                ts.slot_time::time >= b.booking_time
+                AND ts.slot_time::time < (b.booking_time + (b.duration_minutes || ' minutes')::interval)
+            )
+        ) AS is_available
+    FROM time_slots ts
+    CROSS JOIN all_staff s
+    ORDER BY ts.slot_time, s.staff_name;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function untuk validasi staff availability untuk range jam tertentu
+-- Digunakan untuk booking dengan durasi lebih dari 1 jam
+CREATE OR REPLACE FUNCTION is_staff_available_for_range(
+    p_store_id UUID,
+    p_service_product_id UUID,
+    p_booking_date DATE,
+    p_staff_id UUID,
+    p_start_time TIME,
+    p_duration_minutes INTEGER
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    conflict_count INTEGER;
+BEGIN
+    SELECT COUNT(1)
+    INTO conflict_count
+    FROM public.service_bookings sb
+    WHERE sb.store_id = p_store_id
+    AND sb.service_product_id = p_service_product_id
+    AND sb.booking_date = p_booking_date
+    AND sb.assigned_staff_id = p_staff_id
+    AND sb.status NOT IN ('cancelled', 'no_show')
+    AND (
+        -- Cek overlap waktu
+        (p_start_time, (p_start_time + (p_duration_minutes || ' minutes')::interval)::time)
+        OVERLAPS
+        (sb.booking_time, (sb.booking_time + (sb.duration_minutes || ' minutes')::interval)::time)
+    );
+
+    RETURN conflict_count = 0;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Partnership indexes
+CREATE INDEX idx_merchant_partnerships_merchant_id ON public.merchant_partnerships(merchant_id);
+CREATE INDEX idx_merchant_partnerships_store_id ON public.merchant_partnerships(store_id);
+CREATE INDEX idx_merchant_partnerships_partnership_status ON public.merchant_partnerships(partnership_status);
+
+-- Availability indexes
+CREATE INDEX idx_merchant_service_availability_store_id ON public.merchant_service_availability(store_id);
+CREATE INDEX idx_merchant_service_availability_service_product_id ON public.merchant_service_availability(service_product_id);
+CREATE INDEX idx_merchant_service_availability_day_of_week ON public.merchant_service_availability(day_of_week);
+
+-- ========================================
+-- BOOKING SYSTEM HELPER FUNCTIONS
+-- ========================================
+
+-- Function untuk generate booking reference
+CREATE OR REPLACE FUNCTION generate_booking_reference()
+RETURNS TEXT AS $$
+DECLARE
+    today_date TEXT;
+    sequence_number INTEGER;
+    booking_ref TEXT;
+BEGIN
+    today_date := to_char(current_date, 'YYYYMMDD');
+    
+    -- Get next sequence number for today
+    SELECT COALESCE(MAX(CAST(SUBSTRING(booking_reference FROM 13) AS INTEGER)), 0) + 1
+    INTO sequence_number
+    FROM public.service_bookings
+    WHERE booking_reference LIKE 'BK-' || today_date || '-%';
+    
+    booking_ref := 'BK-' || today_date || '-' || LPAD(sequence_number::TEXT, 4, '0');
+    
+    RETURN booking_ref;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ========================================
+-- CALENDAR-STYLE BOOKING SYSTEM DOCUMENTATION
+-- ========================================
+-- 
+-- PERUBAHAN ARSITEKTUR:
+-- ❌ Dihapus: Tabel booking_slots (pre-generate slot)
+-- ❌ Dihapus: Function check_slot_availability, get_available_slots, update_slot_capacity
+-- ✅ Ditambah: Function get_calendar_slots_with_staff() untuk matrix jam × staff
+-- ✅ Ditambah: Function is_staff_available_for_range() untuk validasi durasi > 1 jam
+-- 
+-- FLOW BOOKING SYSTEM BARU:
+-- 1. User pilih tanggal di UI
+-- 2. User tekan tombol "Pilih Time Slot" 
+-- 3. Dialog muncul dengan matrix:
+--    - Baris: Jam operasional (08:00-17:00) - otomatis generate
+--    - Kolom: Semua staff yang aktif di store tersebut
+--    - Cell: Status availability per staff per jam (✅/❌)
+-- 4. User pilih jam & staff yang available
+-- 5. User konfirmasi booking
+-- 6. Booking masuk ke cart dengan detail: nama produk, staff, estimasi waktu
+-- 
+-- KEUNGGULAN FLOW INI:
+-- ✅ Tidak perlu pre-generate slot di database
+-- ✅ Otomatis generate 24 jam setiap pilih tanggal
+-- ✅ Cek real-time dari service_bookings
+-- ✅ Seperti Google Calendar
+-- ✅ Tidak ada risiko lupa generate slot
+-- ✅ Fleksibel untuk multiple staff per jam
+-- ✅ Support durasi service > 1 jam
+-- 
+-- DATA SOURCE:
+-- - service_bookings: Data booking aktual (source of truth)
+-- - users + role_assignments: Data staff aktif
+-- - products: Data service dengan durasi
+-- 
+-- FUNCTION UTAMA:
+-- - get_calendar_slots_with_staff(): Generate matrix jam × staff
+-- - is_staff_available_for_range(): Validasi booking dengan durasi > 1 jam
+-- 
+-- CONTOH PENGGUNAAN:
+-- SELECT * FROM get_calendar_slots_with_staff(
+--     'store_id_xxx', 
+--     'service_id_yyy', 
+--     '2025-01-06'
+-- );
+-- 
+-- Hasil: Matrix dengan kolom slot_time, staff_id, staff_name, is_available
+-- untuk setiap kombinasi jam (08:00-17:00) × staff aktif
+
+-- ========================================
+-- SAMPLE BOOKING DATA
+-- ========================================
+
+-- Insert sample merchant partnership
+INSERT INTO public.merchant_partnerships (
+    merchant_id,
+    store_id,
+    partnership_status,
+    partnership_type,
+    commission_rate,
+    service_areas,
+    is_featured,
+    partnership_start_date
+) 
+SELECT 
+    m.id,
+    s.id,
+    'active',
+    'service_provider',
+    10.0, -- 10% komisi untuk Allnimall
+    '{"areas": ["Jakarta Selatan", "Jakarta Pusat"], "radius_km": 15}',
+    true,
+    current_date
+FROM public.merchants m
+JOIN public.stores s ON s.merchant_id = m.id
+WHERE m.name = 'Allnimall Pet Shop'
+AND s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+-- Insert sample service availability
+INSERT INTO public.merchant_service_availability (
+    store_id,
+    service_product_id,
+    day_of_week,
+    start_time,
+    end_time,
+    slot_duration_minutes,
+    max_concurrent_bookings
+) 
+SELECT 
+    s.id,
+    p.id,
+    1, -- Monday
+    '09:00',
+    '17:00',
+    120, -- 2 hours
+    1
+FROM public.stores s
+JOIN public.products p ON p.store_id = s.id
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+AND p.name = 'Grooming Anjing Kecil'
+AND p.product_type = 'service'
+ON CONFLICT DO NOTHING;
+
+-- ========================================
+-- SAMPLE BOOKING DATA (CALENDAR-STYLE)
+-- ========================================
+
+-- Insert sample service bookings untuk testing calendar-style
+INSERT INTO public.service_bookings (
+    booking_source,
+    booking_reference,
+    customer_id,
+    customer_name,
+    customer_phone,
+    store_id,
+    service_product_id,
+    service_name,
+    booking_date,
+    booking_time,
+    duration_minutes,
+    status,
+    payment_status,
+    service_fee,
+    total_amount,
+    assigned_staff_id
+) 
+SELECT 
+    'merchant_online_store',
+    generate_booking_reference(),
+    c.id,
+    c.name,
+    c.phone,
+    s.id,
+    p.id,
+    p.name,
+    current_date,
+    '10:00',
+    p.duration_minutes,
+    'confirmed',
+    'paid',
+    p.price,
+    p.price,
+    u.id
+FROM public.stores s
+JOIN public.products p ON p.store_id = s.id
+JOIN public.users u ON u.store_id = s.id
+JOIN public.customers c ON c.id = (
+    SELECT id FROM public.customers LIMIT 1
+)
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+AND p.name = 'Grooming Anjing Kecil'
+AND p.product_type = 'service'
+AND u.name = 'Demo Staff'
+ON CONFLICT DO NOTHING;
+
+-- Insert sample booking untuk staff lain di jam yang sama (testing multiple staff)
+INSERT INTO public.service_bookings (
+    booking_source,
+    booking_reference,
+    customer_id,
+    customer_name,
+    customer_phone,
+    store_id,
+    service_product_id,
+    service_name,
+    booking_date,
+    booking_time,
+    duration_minutes,
+    status,
+    payment_status,
+    service_fee,
+    total_amount,
+    assigned_staff_id
+) 
+SELECT 
+    'merchant_online_store',
+    generate_booking_reference(),
+    c.id,
+    c.name,
+    c.phone,
+    s.id,
+    p.id,
+    p.name,
+    current_date,
+    '10:00',
+    p.duration_minutes,
+    'confirmed',
+    'paid',
+    p.price,
+    p.price,
+    u.id
+FROM public.stores s
+JOIN public.products p ON p.store_id = s.id
+JOIN public.users u ON u.store_id = s.id
+JOIN public.customers c ON c.id = (
+    SELECT id FROM public.customers LIMIT 1
+)
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+AND p.name = 'Grooming Anjing Besar'
+AND p.product_type = 'service'
+AND u.name = 'Admin Staff'
+ON CONFLICT DO NOTHING;
+
+-- ========================================
+-- BOOKING SYSTEM COMMENTS
+-- ========================================
+
+COMMENT ON TABLE public.merchant_partnerships IS 'Partnership antara merchant dengan Allnimall untuk layanan jasa';
+COMMENT ON TABLE public.merchant_service_availability IS 'Jadwal availability layanan per merchant';
+COMMENT ON TABLE public.service_bookings IS 'Sistem booking terpadu untuk semua jenis booking (merchant online, Allnimall app, offline store)';
+COMMENT ON TABLE public.service_bookings IS 'Sistem booking terpadu untuk semua jenis booking (merchant online, Allnimall app, offline store) dengan calendar-style availability';
+
+COMMENT ON COLUMN public.service_bookings.booking_source IS 'Sumber booking: merchant_online_store, allnimall_app, offline_store';
+COMMENT ON COLUMN public.service_bookings.booking_reference IS 'Nomor referensi booking unik (format: BK-YYYYMMDD-XXXX)';
+COMMENT ON COLUMN public.service_bookings.pet_id IS 'ID pet (optional - bisa NULL jika tidak ada pet)';
+COMMENT ON COLUMN public.service_bookings.service_type IS 'Tipe layanan: in_store atau on_site';
+COMMENT ON COLUMN public.service_bookings.status IS 'Status booking: pending, confirmed, in_progress, completed, cancelled, no_show';
+COMMENT ON COLUMN public.service_bookings.payment_status IS 'Status pembayaran: pending, paid, refunded';
+COMMENT ON COLUMN public.service_bookings.allnimall_commission IS 'Komisi untuk Allnimall jika booking dari Allnimall app';
+
+-- ========================================
+-- PRODUCT COLUMN COMMENTS
+-- ========================================
+
+COMMENT ON COLUMN public.products.discount_type IS 'Discount type: 1=none, 2=percentage, 3=fixed';
+COMMENT ON COLUMN public.products.discount_value IS 'Discount amount - percentage (if discount_type=2) or fixed amount (if discount_type=3)';
+COMMENT ON COLUMN public.products.product_type IS 'Product type: item (physical product) or service';
+COMMENT ON COLUMN public.products.duration_minutes IS 'Service duration in minutes (for service type products)';
+COMMENT ON COLUMN public.products.service_category IS 'Service category: grooming, veterinary, transportation, etc.';
+
+-- ========================================
+-- FINAL SCHEMA COMPLETION MESSAGE
+-- ========================================
+
+-- Schema ini sekarang menyediakan:
+-- 1. Complete POS functionality (sales, inventory, payment management)
+-- 2. Pet-specific features (health tracking, scheduling, grooming)
+-- 3. Unified customer architecture (one customer can be registered with multiple merchants)
+-- 4. Supabase authentication for both staff and customers
+-- 5. Role-based access control for multi-user stores
+-- 6. Comprehensive business management tools
+-- 7. Geographic support for Indonesia
+-- 8. Performance optimized with proper indexes
+-- 9. Helper functions for customer-merchant relationships
+-- 10. Sample data for quick development start
+-- 11. CALENDAR-STYLE BOOKING SYSTEM:
+--     - Otomatis generate jam operasional (08:00-17:00)
+--     - Matrix jam × staff dengan status availability real-time
+--     - Support multiple staff per jam
+--     - Validasi durasi service > 1 jam
+--     - Seperti Google Calendar (tidak perlu pre-generate slot)
+-- 12. Merchant partnership dengan Allnimall
+-- 13. Real-time availability dari service_bookings
+-- 14. Commission tracking untuk partnership
+
+-- Ready for implementation with Allnimall Unified Customer Architecture + Unified Booking System! 

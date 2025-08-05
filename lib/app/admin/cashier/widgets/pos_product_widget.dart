@@ -1,5 +1,4 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:allnimall_store/src/data/objects/product.dart';
 import 'package:allnimall_store/src/widgets/ui/form/allnimall_text_input.dart';
@@ -9,6 +8,7 @@ import 'package:allnimall_store/src/widgets/ui/feedback/product_loading.dart';
 import 'package:allnimall_store/src/providers/cashier_provider.dart';
 import 'package:allnimall_store/src/providers/management_provider.dart';
 import 'package:allnimall_store/src/core/services/local_storage_service.dart';
+import 'service_selection_dialog.dart';
 
 class PosProductWidget extends ConsumerStatefulWidget {
   const PosProductWidget({super.key});
@@ -122,17 +122,120 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
     }
   }
 
-  Future<void> _addToCartWithAPI(Product product) async {
-    try {
-      debugPrint(
-          '🛒 [PosProductWidget] Adding product ${product.name} to cart...');
+  void _updateCategories() {
+    final categorySet = <String>{};
+    for (final product in products) {
+      if (product.categoryName != null && product.categoryName!.isNotEmpty) {
+        categorySet.add(product.categoryName!);
+      }
+    }
+    categories = categorySet.toList()..sort();
+  }
 
-      // Use cashier provider to add to cart
-      await ref.read(cashierProvider.notifier).addToCart(product.id, 1);
-      debugPrint('🛒 [PosProductWidget] Product added to cart successfully');
+  void _filterProducts() {
+    final searchTerm = _searchController.text.toLowerCase();
+    final categoryFilter = selectedCategory;
+    final typeFilter = _selectedType;
+
+    filteredProducts = products.where((product) {
+      // Search filter
+      final matchesSearch = product.name.toLowerCase().contains(searchTerm) ||
+          (product.code?.toLowerCase().contains(searchTerm) ?? false) ||
+          (product.barcode?.toLowerCase().contains(searchTerm) ?? false);
+
+      // Category filter
+      final matchesCategory = categoryFilter == null ||
+          categoryFilter == 'all' ||
+          product.categoryName == categoryFilter;
+
+      // Type filter
+      final matchesType = typeFilter == 'all' ||
+          (typeFilter == 'item' && product.isItem) ||
+          (typeFilter == 'service' && product.isService);
+
+      return matchesSearch && matchesCategory && matchesType;
+    }).toList();
+
+    // Debug: Show all products and their types
+    debugPrint('🛒 [PosProductWidget] All products:');
+    int serviceCount = 0;
+    int itemCount = 0;
+    for (final product in products) {
+      debugPrint(
+          '  - ${product.name}: type=${product.productType}, isService=${product.isService}, duration=${product.durationMinutes}');
+      if (product.isService) serviceCount++;
+      if (product.isItem) itemCount++;
+    }
+    debugPrint('🛒 [PosProductWidget] Total products: ${products.length}');
+    debugPrint('🛒 [PosProductWidget] Service products: $serviceCount');
+    debugPrint('🛒 [PosProductWidget] Item products: $itemCount');
+    debugPrint(
+        '🛒 [PosProductWidget] Filtered products: ${filteredProducts.length}');
+  }
+
+  void _onCategoryChanged(String? category) {
+    setState(() {
+      selectedCategory = category;
+    });
+    _filterProducts();
+  }
+
+  void _onTypeChanged(String type) {
+    if (_selectedType != type) {
+      setState(() {
+        _selectedType = type;
+      });
+      _filterProducts();
+    }
+  }
+
+  Future<void> _addToCartWithAPI(Product product) async {
+    debugPrint(
+        '🛒 [PosProductWidget] _addToCartWithAPI called for product: ${product.name}');
+    debugPrint('🛒 [PosProductWidget] Product isService: ${product.isService}');
+    debugPrint('🛒 [PosProductWidget] Product type: ${product.productType}');
+    debugPrint(
+        '🛒 [PosProductWidget] Product duration: ${product.durationMinutes}');
+
+    try {
+      if (product.isService) {
+        debugPrint(
+            '🛒 [PosProductWidget] Product is service, showing dialog...');
+        // Show service selection dialog for services
+        await _showServiceSelectionDialog(product);
+      } else {
+        debugPrint(
+            '🛒 [PosProductWidget] Product is item, adding directly to cart...');
+        // Add product directly to cart
+        await ref.read(cashierProvider.notifier).addToCart(product.id, 1);
+
+        // Show success toast
+        if (mounted) {
+          showToast(
+            context: context,
+            builder: (context, overlay) {
+              return SurfaceCard(
+                child: Basic(
+                  title: const Text('Berhasil'),
+                  content: Text('${product.name} ditambahkan ke keranjang'),
+                  trailing: SizedBox(
+                    height: 32,
+                    child: AllnimallButton.ghost(
+                      onPressed: () => overlay.close(),
+                      child: const Text(
+                        'Tutup',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        }
+      }
     } catch (e) {
-      debugPrint('❌ [PosProductWidget] Error adding to cart: $e');
-      // Show error toast
+      debugPrint('❌ [PosProductWidget] Error in _addToCartWithAPI: $e');
       if (mounted) {
         showToast(
           context: context,
@@ -159,56 +262,89 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
     }
   }
 
-  void _updateCategories() {
-    categories = products
-        .map((p) => p.categoryName)
-        .where((c) => c != null && c.isNotEmpty)
-        .map((c) => c!)
-        .toSet()
-        .toList();
-  }
+  Future<void> _showServiceSelectionDialog(Product product) async {
+    debugPrint(
+        '🛒 [PosProductWidget] _showServiceSelectionDialog called for product: ${product.name}');
 
-  void _filterProducts() {
-    final searchQuery = _searchController.text.toLowerCase();
+    try {
+      // Show proper service booking modal
+      await showDialog(
+        context: context,
+        builder: (context) => ServiceSelectionDialog(
+          product: product,
+          onServiceSelected: (bookingData) async {
+            debugPrint(
+                '🛒 [PosProductWidget] onServiceSelected called with data: $bookingData');
+            try {
+              // Add service to cart with booking details using CashierProvider
+              await ref.read(cashierProvider.notifier).addServiceToCart(
+                    productId: bookingData['productId'],
+                    bookingDate: bookingData['bookingDate'],
+                    bookingTime: bookingData['bookingTime'],
+                    durationMinutes: bookingData['durationMinutes'],
+                    assignedStaffId: bookingData['assignedStaffId'],
+                    customerNotes: bookingData['customerNotes'],
+                  );
 
-    // Prevent unnecessary setState calls
-    final newFilteredProducts = products.where((product) {
-      final matchesSearch = product.name.toLowerCase().contains(searchQuery) ||
-          (product.code?.toLowerCase().contains(searchQuery) ?? false) ||
-          (product.barcode?.toLowerCase().contains(searchQuery) ?? false);
+              // Show success toast
+              if (mounted) {
+                showToast(
+                  context: context,
+                  builder: (context, overlay) {
+                    return SurfaceCard(
+                      child: Basic(
+                        title: const Text('Berhasil'),
+                        content: Text(
+                            '${product.name} ditambahkan ke keranjang dengan booking'),
+                        trailing: SizedBox(
+                          height: 32,
+                          child: AllnimallButton.ghost(
+                            onPressed: () => overlay.close(),
+                            child: const Text(
+                              'Tutup',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
+            } catch (e) {
+              debugPrint('❌ [PosProductWidget] Error in onServiceSelected: $e');
+              if (mounted) {
+                showToast(
+                  context: context,
+                  builder: (context, overlay) {
+                    return SurfaceCard(
+                      child: Basic(
+                        title: const Text('Error'),
+                        content:
+                            Text('Gagal menambahkan service ke keranjang: $e'),
+                        trailing: SizedBox(
+                          height: 32,
+                          child: AllnimallButton.ghost(
+                            onPressed: () => overlay.close(),
+                            child: const Text(
+                              'Tutup',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
+            }
+          },
+        ),
+      );
 
-      final matchesCategory =
-          selectedCategory == null || product.categoryName == selectedCategory;
-
-      final matchesType =
-          _selectedType == 'all' || product.productType == _selectedType;
-
-      return matchesSearch && matchesCategory && matchesType;
-    }).toList();
-
-    // Only update if the list actually changed
-    if (!listEquals(filteredProducts, newFilteredProducts)) {
-      setState(() {
-        filteredProducts = newFilteredProducts;
-      });
-    }
-  }
-
-  void _onCategoryChanged(String? category) {
-    if (selectedCategory != category) {
-      setState(() {
-        selectedCategory = category;
-      });
-      _filterProducts();
-    }
-  }
-
-  void _onTypeChanged(String type) {
-    if (_selectedType != type) {
-      setState(() {
-        _selectedType = type;
-      });
-      _filterProducts();
+      debugPrint('🛒 [PosProductWidget] Service booking modal closed');
+    } catch (e) {
+      debugPrint('❌ [PosProductWidget] Error showing dialog: $e');
     }
   }
 
@@ -253,7 +389,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Icon(
-        Icons.pets,
+        product.isService ? Icons.schedule : Icons.pets,
         size: 24,
         color: product.stock > 0 ? Colors.blue[600] : Colors.slate[400],
       ),
@@ -307,89 +443,66 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
     return Column(
       children: [
         // Search and Filter Section
-        Container(
+        SurfaceCard(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              // Search and Category Row
+              // Search Bar
+              AllnimallTextInput(
+                controller: _searchController,
+                placeholder: 'Cari produk...',
+                leading: const Icon(Icons.search),
+              ),
+              const SizedBox(height: 16),
+              // Filter Row
               Row(
                 children: [
-                  // Search Input
-                  Expanded(
-                    child: AllnimallTextInput(
-                      controller: _searchController,
-                      placeholder: 'Cari produk...',
-                      leading: const Icon(Icons.search),
-                      features: const [
-                        InputFeature.clear(),
-                      ],
-                    ),
-                  ),
-                  const Gap(16),
                   // Category Filter
-                  SizedBox(
-                    width: 200,
+                  Expanded(
                     child: AllnimallSelect<String>(
                       value: selectedCategory,
                       onChanged: _onCategoryChanged,
                       placeholder: const Text('Semua Kategori'),
-                      searchPlaceholder: 'Cari kategori...',
                       items: categories,
                       itemBuilder: (context, category) {
                         return Text(category);
                       },
                     ),
                   ),
-                ],
-              ),
-              const Gap(16),
-              // Type Filter with Radio Cards
-              Row(
-                children: [
-                  const Text(
-                    'Filter Tipe:',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                  const SizedBox(width: 16),
+                  // Type Filter
+                  Expanded(
+                    child: AllnimallSelect<String>(
+                      value: _selectedType,
+                      onChanged: (value) => _onTypeChanged(value ?? 'all'),
+                      placeholder: const Text('Semua Tipe'),
+                      items: const ['all', 'item', 'service'],
+                      itemBuilder: (context, type) {
+                        String label;
+                        switch (type) {
+                          case 'all':
+                            label = 'Semua Tipe';
+                            break;
+                          case 'item':
+                            label = 'Produk';
+                            break;
+                          case 'service':
+                            label = 'Jasa';
+                            break;
+                          default:
+                            label = type;
+                        }
+                        return Text(label);
+                      },
                     ),
-                  ),
-                  const Gap(16),
-                  RadioGroup<String>(
-                    value: _selectedType,
-                    onChanged: _onTypeChanged,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        RadioCard<String>(
-                          value: 'all',
-                          child: Basic(
-                            title: Text('Semua'),
-                            content: Text('Tampilkan semua produk'),
-                          ),
-                        ),
-                        RadioCard<String>(
-                          value: 'item',
-                          child: Basic(
-                            title: Text('Barang'),
-                            content: Text('Produk fisik'),
-                          ),
-                        ),
-                        RadioCard<String>(
-                          value: 'service',
-                          child: Basic(
-                            title: Text('Jasa'),
-                            content: Text('Layanan'),
-                          ),
-                        ),
-                      ],
-                    ).gap(12),
                   ),
                 ],
               ),
             ],
           ),
         ),
-        // Product grid
+        const SizedBox(height: 16),
+        // Products Grid
         Expanded(
           child: isLoadingProducts
               ? const ProductLoading()
@@ -508,19 +621,39 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                                   const SizedBox(height: 4),
                                   Text(product.formattedPrice).muted().small(),
                                   const SizedBox(height: 4),
-                                  Text('Stok: ${product.formattedStock}')
-                                      .muted()
-                                      .xSmall(),
+                                  if (product.isService) ...[
+                                    Text('Durasi: ${product.formattedDuration}')
+                                        .muted()
+                                        .xSmall(),
+                                    const SizedBox(height: 2),
+                                  ] else ...[
+                                    Text('Stok: ${product.formattedStock}')
+                                        .muted()
+                                        .xSmall(),
+                                    const SizedBox(height: 2),
+                                  ],
                                   const SizedBox(height: 8),
                                   SizedBox(
                                     height: 32,
                                     child: AllnimallButton.primary(
-                                      onPressed: product.stock > 0
-                                          ? () => _addToCartWithAPI(product)
+                                      onPressed: (product.stock > 0 ||
+                                              product.isService)
+                                          ? () {
+                                              debugPrint(
+                                                  '🛒 [PosProductWidget] Button clicked for product: ${product.name}');
+                                              debugPrint(
+                                                  '🛒 [PosProductWidget] Product stock: ${product.stock}');
+                                              debugPrint(
+                                                  '🛒 [PosProductWidget] Product isService: ${product.isService}');
+                                              _addToCartWithAPI(product);
+                                            }
                                           : null,
-                                      child: const Text(
-                                        'Tambah',
-                                        style: TextStyle(color: Colors.white),
+                                      child: Text(
+                                        product.isService
+                                            ? 'Booking'
+                                            : 'Tambah',
+                                        style: const TextStyle(
+                                            color: Colors.white),
                                       ),
                                     ),
                                   ),

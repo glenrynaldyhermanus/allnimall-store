@@ -138,48 +138,58 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
         await SupabaseService.createProduct(productData);
       }
 
-      // Show success toast first
-      if (mounted) {
-        shadcn.showToast(
-          context: context,
-          builder: (context, overlay) => shadcn.SurfaceCard(
-            child: shadcn.Basic(
-              title: const Text('Berhasil'),
-              content: Text(widget.service != null
-                  ? 'Jasa berhasil diperbarui'
-                  : 'Jasa berhasil disimpan'),
-              trailing: AllnimallButton.primary(
-                onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
-              ),
-            ),
-          ),
-          location: shadcn.ToastLocation.topCenter,
-        );
-      }
-
-      // Close sheet after showing toast
+      // Close sheet first
       if (mounted) {
         shadcn.closeSheet(context);
+      }
+
+      // Show success toast after closing sheet
+      if (mounted) {
+        // Use a small delay to ensure sheet is closed
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            shadcn.showToast(
+              context: context,
+              builder: (context, overlay) => shadcn.SurfaceCard(
+                child: shadcn.Basic(
+                  title: const Text('Berhasil'),
+                  content: Text(widget.service != null
+                      ? 'Jasa berhasil diperbarui'
+                      : 'Jasa berhasil disimpan'),
+                  trailing: AllnimallButton.primary(
+                    onPressed: () => overlay.close(),
+                    child: const Text('Tutup'),
+                  ),
+                ),
+              ),
+              location: shadcn.ToastLocation.topCenter,
+            );
+          }
+        });
       }
     } catch (e) {
       // Show error toast
       if (mounted) {
-        shadcn.showToast(
-          context: context,
-          builder: (context, overlay) => shadcn.SurfaceCard(
-            child: shadcn.Basic(
-              title: const Text('Error'),
-              content: Text(
-                  'Gagal ${widget.service != null ? 'memperbarui' : 'menyimpan'} jasa: ${e.toString()}'),
-              trailing: AllnimallButton.primary(
-                onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
+        // Use a small delay to ensure proper context
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (mounted) {
+            shadcn.showToast(
+              context: context,
+              builder: (context, overlay) => shadcn.SurfaceCard(
+                child: shadcn.Basic(
+                  title: const Text('Error'),
+                  content: Text(
+                      'Gagal ${widget.service != null ? 'memperbarui' : 'menyimpan'} jasa: ${e.toString()}'),
+                  trailing: AllnimallButton.primary(
+                    onPressed: () => overlay.close(),
+                    child: const Text('Tutup'),
+                  ),
+                ),
               ),
-            ),
-          ),
-          location: shadcn.ToastLocation.topCenter,
-        );
+              location: shadcn.ToastLocation.topCenter,
+            );
+          }
+        });
       }
     } finally {
       setState(() {

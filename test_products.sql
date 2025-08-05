@@ -16,7 +16,10 @@ INSERT INTO public.products (
     unit,
     weight_grams,
     description,
-    is_active
+    is_active,
+    product_type,
+    duration_minutes,
+    service_category
 ) VALUES 
 (
     gen_random_uuid(),
@@ -32,7 +35,10 @@ INSERT INTO public.products (
     'pcs',
     500,
     'Makanan kucing premium dengan nutrisi lengkap',
-    true
+    true,
+    'item',
+    NULL,
+    NULL
 ),
 (
     gen_random_uuid(),
@@ -48,7 +54,10 @@ INSERT INTO public.products (
     'pcs',
     1000,
     'Makanan anjing dewasa dengan protein tinggi',
-    true
+    true,
+    'item',
+    NULL,
+    NULL
 ),
 (
     gen_random_uuid(),
@@ -64,7 +73,10 @@ INSERT INTO public.products (
     'pcs',
     250,
     'Shampoo khusus kucing dengan pH seimbang',
-    true
+    true,
+    'item',
+    NULL,
+    NULL
 ),
 (
     gen_random_uuid(),
@@ -80,7 +92,10 @@ INSERT INTO public.products (
     'pcs',
     50,
     'Mainan bola untuk kucing dengan suara',
-    true
+    true,
+    'item',
+    NULL,
+    NULL
 ),
 (
     gen_random_uuid(),
@@ -96,7 +111,107 @@ INSERT INTO public.products (
     'pcs',
     5000,
     'Kandang anjing ukuran medium',
-    true
+    true,
+    'item',
+    NULL,
+    NULL
+),
+
+-- Service products
+(
+    gen_random_uuid(),
+    now() AT TIME ZONE 'utc',
+    '00000000-0000-0000-0000-000000000000'::uuid,
+    'Grooming Anjing Kecil',
+    'YOUR_STORE_ID_HERE', -- Ganti dengan store_id yang sesuai
+    NULL,
+    0,
+    150000,
+    0,
+    0,
+    'session',
+    0,
+    'Jasa grooming untuk anjing kecil',
+    true,
+    'service',
+    120,
+    'grooming'
+),
+(
+    gen_random_uuid(),
+    now() AT TIME ZONE 'utc',
+    '00000000-0000-0000-0000-000000000000'::uuid,
+    'Grooming Anjing Besar',
+    'YOUR_STORE_ID_HERE', -- Ganti dengan store_id yang sesuai
+    NULL,
+    0,
+    200000,
+    0,
+    0,
+    'session',
+    0,
+    'Jasa grooming untuk anjing besar',
+    true,
+    'service',
+    180,
+    'grooming'
+),
+(
+    gen_random_uuid(),
+    now() AT TIME ZONE 'utc',
+    '00000000-0000-0000-0000-000000000000'::uuid,
+    'Grooming Kucing',
+    'YOUR_STORE_ID_HERE', -- Ganti dengan store_id yang sesuai
+    NULL,
+    0,
+    120000,
+    0,
+    0,
+    'session',
+    0,
+    'Jasa grooming untuk kucing',
+    true,
+    'service',
+    90,
+    'grooming'
+),
+(
+    gen_random_uuid(),
+    now() AT TIME ZONE 'utc',
+    '00000000-0000-0000-0000-000000000000'::uuid,
+    'Cek Kesehatan Hewan',
+    'YOUR_STORE_ID_HERE', -- Ganti dengan store_id yang sesuai
+    NULL,
+    0,
+    100000,
+    0,
+    0,
+    'session',
+    0,
+    'Jasa pemeriksaan kesehatan hewan',
+    true,
+    'service',
+    60,
+    'health'
+),
+(
+    gen_random_uuid(),
+    now() AT TIME ZONE 'utc',
+    '00000000-0000-0000-0000-000000000000'::uuid,
+    'Vaksinasi Hewan',
+    'YOUR_STORE_ID_HERE', -- Ganti dengan store_id yang sesuai
+    NULL,
+    0,
+    80000,
+    0,
+    0,
+    'session',
+    0,
+    'Jasa vaksinasi hewan',
+    true,
+    'service',
+    45,
+    'health'
 );
 
 -- Query untuk melihat produk yang sudah ada
@@ -107,7 +222,18 @@ SELECT
     price,
     stock,
     is_active,
+    product_type,
+    duration_minutes,
+    service_category,
     created_at
 FROM public.products 
 WHERE store_id = 'YOUR_STORE_ID_HERE' -- Ganti dengan store_id yang sesuai
-ORDER BY created_at DESC; 
+ORDER BY created_at DESC;
+
+-- Quick test: Check if any service products exist
+SELECT 
+    COUNT(*) as total_products,
+    COUNT(CASE WHEN product_type = 'service' THEN 1 END) as service_products,
+    COUNT(CASE WHEN product_type = 'item' THEN 1 END) as item_products
+FROM public.products 
+WHERE store_id = 'YOUR_STORE_ID_HERE'; -- Ganti dengan store_id yang sesuai 

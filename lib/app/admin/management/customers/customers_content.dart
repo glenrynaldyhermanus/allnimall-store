@@ -1,15 +1,14 @@
-import 'package:shadcn_flutter/shadcn_flutter.dart';
-
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:allnimall_store/app/admin/management/customers/widgets/customer_form_sheet.dart';
+import 'package:allnimall_store/src/core/services/supabase_service.dart';
 import 'package:allnimall_store/src/core/theme/app_theme.dart';
+import 'package:allnimall_store/src/data/objects/customer.dart';
 import 'package:allnimall_store/src/providers/management_provider.dart';
 import 'package:allnimall_store/src/widgets/ui/form/allnimall_button.dart';
+import 'package:allnimall_store/src/widgets/ui/form/allnimall_dialog.dart';
 import 'package:allnimall_store/src/widgets/ui/form/allnimall_icon_button.dart';
 import 'package:allnimall_store/src/widgets/ui/table/allnimall_table.dart';
-import 'package:allnimall_store/src/widgets/ui/form/allnimall_dialog.dart';
-import 'package:allnimall_store/src/core/services/supabase_service.dart';
-import 'package:allnimall_store/src/data/objects/customer.dart';
-import 'package:allnimall_store/app/admin/management/customers/widgets/customer_form_sheet.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 class CustomersContent extends ConsumerStatefulWidget {
   const CustomersContent({super.key});

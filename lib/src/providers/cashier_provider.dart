@@ -236,6 +236,61 @@ class CashierNotifier extends StateNotifier<CashierState> {
     }
   }
 
+  Future<void> addServiceToCart({
+    required String productId,
+    required DateTime bookingDate,
+    required String bookingTime,
+    required int durationMinutes,
+    required String assignedStaffId,
+    String? customerNotes,
+  }) async {
+    debugPrint(
+        '🛒 [CashierProvider] addServiceToCart called with productId: $productId');
+
+    if (state is CashierLoaded) {
+      final currentState = state as CashierLoaded;
+      try {
+        final addToCartUseCase = ref.read(addToCartUseCaseProvider);
+        final getCartUseCase = ref.read(getCartUseCaseProvider);
+
+        debugPrint('🛒 [CashierProvider] Calling addServiceToCart...');
+        await addToCartUseCase.addService(
+          productId: productId,
+          bookingDate: bookingDate,
+          bookingTime: bookingTime,
+          durationMinutes: durationMinutes,
+          assignedStaffId: assignedStaffId,
+          customerNotes: customerNotes,
+        );
+        debugPrint('🛒 [CashierProvider] Service added to cart successfully');
+
+        debugPrint('🛒 [CashierProvider] Loading updated cart...');
+        final cartItems = await getCartUseCase();
+        debugPrint(
+            '🛒 [CashierProvider] Cart loaded with ${cartItems.length} items');
+
+        final sortedCartItems = _sortCartItems(cartItems);
+        final totals = _calculateTotals(sortedCartItems);
+
+        debugPrint('✅ [CashierProvider] Updating state with new cart data...');
+        state = currentState.copyWith(
+          cartItems: sortedCartItems,
+          total: totals['total']!,
+          tax: totals['tax']!,
+          discount: totals['discount']!,
+          finalTotal: totals['finalTotal']!,
+        );
+        debugPrint('✅ [CashierProvider] State updated successfully');
+      } catch (e) {
+        debugPrint('❌ [CashierProvider] Error in addServiceToCart: $e');
+        state = CashierError(e.toString());
+      }
+    } else {
+      debugPrint(
+          '❌ [CashierProvider] State is not CashierLoaded, current state: ${state.runtimeType}');
+    }
+  }
+
   Future<void> updateCartQuantity(String productId, int quantity) async {
     if (state is CashierLoaded) {
       final currentState = state as CashierLoaded;

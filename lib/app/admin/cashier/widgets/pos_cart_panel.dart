@@ -103,26 +103,15 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
           isLoadingCart = false;
         });
       }
-
-      // Show error toast with more detailed information
+      // Show error toast
       if (mounted) {
         showToast(
           context: context,
           builder: (context, overlay) {
             return SurfaceCard(
               child: Basic(
-                title: const Text('Error Memuat Keranjang'),
-                content: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Detail error: $e'),
-                    const SizedBox(height: 8),
-                    const Text('Tips:'),
-                    const Text('• Pastikan sudah login'),
-                    const Text('• Pastikan memiliki akses ke store'),
-                    const Text('• Coba refresh halaman'),
-                  ],
-                ),
+                title: const Text('Error'),
+                content: Text('Gagal memuat keranjang: $e'),
                 trailing: SizedBox(
                   height: 32,
                   child: AllnimallButton.ghost(
@@ -143,79 +132,74 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
 
   Future<void> _removeFromCart(String cartItemId) async {
     try {
+      // Find the cart item to get product ID
       final cartItem = cartItems.firstWhere((item) => item.id == cartItemId);
 
-      // Use cashier provider to update quantity to 0 (remove)
-      await ref
-          .read(cashierProvider.notifier)
-          .updateCartQuantity(cartItem.product.id, 0);
-
-      // Reload cart data
-      await _loadCartData();
+      // Use updateCartQuantity with 0 to remove item
+      await ref.read(cashierProvider.notifier).updateCartQuantity(
+            cartItem.product.id,
+            0,
+          );
     } catch (e) {
-      // Show error toast
-      if (mounted) {
-        showToast(
-          context: context,
-          builder: (context, overlay) {
-            return SurfaceCard(
-              child: Basic(
-                title: const Text('Error'),
-                content: Text('Gagal menghapus dari keranjang: $e'),
-                trailing: SizedBox(
-                  height: 32,
-                  child: AllnimallButton.ghost(
-                    onPressed: () => overlay.close(),
-                    child: const Text(
-                      'Tutup',
-                      style: TextStyle(color: Colors.white),
-                    ),
+      if (!mounted) return;
+
+      showToast(
+        context: context,
+        builder: (context, overlay) {
+          return SurfaceCard(
+            child: Basic(
+              title: const Text('Error'),
+              content: Text('Gagal menghapus item: $e'),
+              trailing: SizedBox(
+                height: 32,
+                child: AllnimallButton.ghost(
+                  onPressed: () => overlay.close(),
+                  child: const Text(
+                    'Tutup',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ),
-            );
-          },
-        );
-      }
+            ),
+          );
+        },
+      );
     }
   }
 
   Future<void> _updateQuantity(String cartItemId, int newQuantity) async {
     try {
+      // Find the cart item to get product ID
       final cartItem = cartItems.firstWhere((item) => item.id == cartItemId);
 
-      // Use cashier provider to update quantity
-      await ref
-          .read(cashierProvider.notifier)
-          .updateCartQuantity(cartItem.product.id, newQuantity);
-
-      // Reload cart data
-      await _loadCartData();
+      await ref.read(cashierProvider.notifier).updateCartQuantity(
+            cartItem.product.id,
+            newQuantity,
+          );
     } catch (e) {
-      // Show error toast
-      if (mounted) {
-        showToast(
-          context: context,
-          builder: (context, overlay) {
-            return SurfaceCard(
-              child: Basic(
-                title: const Text('Error'),
-                content: Text('Gagal mengupdate jumlah: $e'),
-                trailing: SizedBox(
-                  height: 32,
-                  child: AllnimallButton.ghost(
-                    onPressed: () => overlay.close(),
-                    child: const Text(
-                      'Tutup',
-                      style: TextStyle(color: Colors.white),
-                    ),
+      if (!mounted) return;
+
+      showToast(
+        context: context,
+        builder: (context, overlay) {
+          return SurfaceCard(
+            child: Basic(
+              title: const Text('Error'),
+              content: Text('Gagal mengupdate jumlah: $e'),
+              trailing: SizedBox(
+                height: 32,
+                child: AllnimallButton.ghost(
+                  onPressed: () => overlay.close(),
+                  child: const Text(
+                    'Tutup',
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ),
-            );
-          },
-        );
-      }
+            ),
+          );
+        },
+      );
     }
   }
 
@@ -227,6 +211,167 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
     // - Navigate to payment page
     // - Process payment
     // - Clear cart after successful payment
+  }
+
+  Widget _buildCartItem(CartItem cartItem) {
+    return SurfaceCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Item Header
+          Row(
+            children: [
+              // Item Type Icon
+              Icon(
+                cartItem.isService ? Icons.schedule : Icons.inventory,
+                size: 16,
+                color: cartItem.isService ? Colors.blue : Colors.green,
+              ),
+              const SizedBox(width: 8),
+              // Item Name
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(cartItem.product.name).semiBold(),
+                    if (cartItem.isService) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        cartItem.bookingInfo.isNotEmpty
+                            ? cartItem.bookingInfo
+                            : 'Belum dijadwalkan',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: cartItem.bookingInfo.isNotEmpty
+                              ? Colors.blue
+                              : Colors.orange,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Remove Button
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: AllnimallIconButton.ghost(
+                  onPressed: () => _removeFromCart(cartItem.id),
+                  icon: const Icon(Icons.close, size: 16),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // Item Details
+          Row(
+            children: [
+              Text(cartItem.product.formattedPrice).muted().small(),
+              const Spacer(),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: AllnimallIconButton.ghost(
+                      onPressed: () =>
+                          _updateQuantity(cartItem.id, cartItem.quantity - 1),
+                      icon: const Icon(Icons.remove, size: 16),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 40,
+                    child: Text(cartItem.formattedQuantity).semiBold().center(),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 32,
+                    height: 32,
+                    child: AllnimallIconButton.ghost(
+                      onPressed: () =>
+                          _updateQuantity(cartItem.id, cartItem.quantity + 1),
+                      icon: const Icon(Icons.add, size: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // Service-specific details
+          if (cartItem.isService && cartItem.bookingInfo.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.schedule,
+                        size: 14,
+                        color: Colors.blue[700],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Booking Details',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    cartItem.bookingInfo,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                  if (cartItem.serviceDuration.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Durasi: ${cartItem.serviceDuration}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue[600],
+                      ),
+                    ),
+                  ],
+                  if (cartItem.customerNotes?.isNotEmpty == true) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Catatan: ${cartItem.customerNotes}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue[600],
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 4),
+          Text('Total: ${cartItem.formattedTotalPrice}').semiBold().small(),
+        ],
+      ),
+    );
   }
 
   @override
@@ -406,78 +551,9 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                         itemCount: cartItems.length,
                         itemBuilder: (context, index) {
                           final cartItem = cartItems[index];
-                          return SurfaceCard(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(cartItem.product.name)
-                                          .semiBold(),
-                                    ),
-                                    SizedBox(
-                                      width: 32,
-                                      height: 32,
-                                      child: AllnimallIconButton.ghost(
-                                        onPressed: () =>
-                                            _removeFromCart(cartItem.id),
-                                        icon: const Icon(Icons.close, size: 16),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Row(
-                                  children: [
-                                    Text(cartItem.product.formattedPrice)
-                                        .muted()
-                                        .small(),
-                                    const Spacer(),
-                                    Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        SizedBox(
-                                          width: 32,
-                                          height: 32,
-                                          child: AllnimallIconButton.ghost(
-                                            onPressed: () => _updateQuantity(
-                                                cartItem.id,
-                                                cartItem.quantity - 1),
-                                            icon: const Icon(Icons.remove,
-                                                size: 16),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        SizedBox(
-                                          width: 40,
-                                          child: Text(cartItem.formattedQuantity)
-                                              .semiBold()
-                                              .center(),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        SizedBox(
-                                          width: 32,
-                                          height: 32,
-                                          child: AllnimallIconButton.ghost(
-                                            onPressed: () => _updateQuantity(
-                                                cartItem.id,
-                                                cartItem.quantity + 1),
-                                            icon:
-                                                const Icon(Icons.add, size: 16),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text('Total: ${cartItem.formattedTotalPrice}')
-                                    .semiBold()
-                                    .small(),
-                              ],
-                            ),
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: _buildCartItem(cartItem),
                           );
                         },
                       ),
@@ -492,7 +568,9 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                   children: [
                     const Text('Total:').semiBold(),
                     const Spacer(),
-                    Text(NumberFormatter.formatTotalPrice(totalPrice)).h3().bold(),
+                    Text(NumberFormatter.formatTotalPrice(totalPrice))
+                        .h3()
+                        .bold(),
                   ],
                 ),
                 const SizedBox(height: 16),
