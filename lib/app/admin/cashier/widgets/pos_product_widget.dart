@@ -25,6 +25,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
   // Search and Filter State
   final TextEditingController _searchController = TextEditingController();
   String? selectedCategory;
+  String _selectedType = 'all'; // 'all', 'item', 'service'
   List<String> categories = [];
   List<Product> filteredProducts = [];
 
@@ -179,7 +180,10 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
       final matchesCategory =
           selectedCategory == null || product.categoryName == selectedCategory;
 
-      return matchesSearch && matchesCategory;
+      final matchesType =
+          _selectedType == 'all' || product.productType == _selectedType;
+
+      return matchesSearch && matchesCategory && matchesType;
     }).toList();
 
     // Only update if the list actually changed
@@ -194,6 +198,15 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
     if (selectedCategory != category) {
       setState(() {
         selectedCategory = category;
+      });
+      _filterProducts();
+    }
+  }
+
+  void _onTypeChanged(String type) {
+    if (_selectedType != type) {
+      setState(() {
+        _selectedType = type;
       });
       _filterProducts();
     }
@@ -296,33 +309,82 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
         // Search and Filter Section
         Container(
           padding: const EdgeInsets.all(16),
-          child: Row(
+          child: Column(
             children: [
-              // Search Input
-              Expanded(
-                child: AllnimallTextInput(
-                  controller: _searchController,
-                  placeholder: 'Cari produk...',
-                  leading: const Icon(Icons.search),
-                  features: const [
-                    InputFeature.clear(),
-                  ],
-                ),
+              // Search and Category Row
+              Row(
+                children: [
+                  // Search Input
+                  Expanded(
+                    child: AllnimallTextInput(
+                      controller: _searchController,
+                      placeholder: 'Cari produk...',
+                      leading: const Icon(Icons.search),
+                      features: const [
+                        InputFeature.clear(),
+                      ],
+                    ),
+                  ),
+                  const Gap(16),
+                  // Category Filter
+                  SizedBox(
+                    width: 200,
+                    child: AllnimallSelect<String>(
+                      value: selectedCategory,
+                      onChanged: _onCategoryChanged,
+                      placeholder: const Text('Semua Kategori'),
+                      searchPlaceholder: 'Cari kategori...',
+                      items: categories,
+                      itemBuilder: (context, category) {
+                        return Text(category);
+                      },
+                    ),
+                  ),
+                ],
               ),
               const Gap(16),
-              // Category Filter
-              SizedBox(
-                width: 200,
-                child: AllnimallSelect<String>(
-                  value: selectedCategory,
-                  onChanged: _onCategoryChanged,
-                  placeholder: const Text('Semua Kategori'),
-                  searchPlaceholder: 'Cari kategori...',
-                  items: categories,
-                  itemBuilder: (context, category) {
-                    return Text(category);
-                  },
-                ),
+              // Type Filter with Radio Cards
+              Row(
+                children: [
+                  const Text(
+                    'Filter Tipe:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Gap(16),
+                  RadioGroup<String>(
+                    value: _selectedType,
+                    onChanged: _onTypeChanged,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        RadioCard<String>(
+                          value: 'all',
+                          child: Basic(
+                            title: Text('Semua'),
+                            content: Text('Tampilkan semua produk'),
+                          ),
+                        ),
+                        RadioCard<String>(
+                          value: 'item',
+                          child: Basic(
+                            title: Text('Barang'),
+                            content: Text('Produk fisik'),
+                          ),
+                        ),
+                        RadioCard<String>(
+                          value: 'service',
+                          child: Basic(
+                            title: Text('Jasa'),
+                            content: Text('Layanan'),
+                          ),
+                        ),
+                      ],
+                    ).gap(12),
+                  ),
+                ],
               ),
             ],
           ),
@@ -444,9 +506,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                                   const SizedBox(height: 8),
                                   Text(product.name).semiBold(),
                                   const SizedBox(height: 4),
-                                  Text(product.formattedPrice)
-                                      .muted()
-                                      .small(),
+                                  Text(product.formattedPrice).muted().small(),
                                   const SizedBox(height: 4),
                                   Text('Stok: ${product.formattedStock}')
                                       .muted()

@@ -1,5 +1,4 @@
 import 'package:shadcn_flutter/shadcn_flutter.dart';
-import 'allnimall_avatar.dart';
 
 class AllnimallAvatarGroup extends StatelessWidget {
   final List<Avatar> children;
@@ -22,8 +21,8 @@ class AllnimallAvatarGroup extends StatelessWidget {
         : children;
 
     return AvatarGroup(
-      children: avatars,
       alignment: alignment,
+      children: avatars,
     );
   }
 }
@@ -36,10 +35,10 @@ class AllnimallAvatarGroupBuilder {
     int? maxAvatars,
   }) {
     return AllnimallAvatarGroup(
-      children: children,
       spacing: spacing,
       maxAvatars: maxAvatars,
       alignment: Alignment.centerLeft,
+      children: children,
     );
   }
 
@@ -49,10 +48,10 @@ class AllnimallAvatarGroupBuilder {
     int? maxAvatars,
   }) {
     return AllnimallAvatarGroup(
-      children: children,
       spacing: spacing,
       maxAvatars: maxAvatars,
       alignment: Alignment.centerRight,
+      children: children,
     );
   }
 
@@ -62,10 +61,10 @@ class AllnimallAvatarGroupBuilder {
     int? maxAvatars,
   }) {
     return AllnimallAvatarGroup(
-      children: children,
       spacing: spacing,
       maxAvatars: maxAvatars,
       alignment: Alignment.topCenter,
+      children: children,
     );
   }
 
@@ -75,10 +74,10 @@ class AllnimallAvatarGroupBuilder {
     int? maxAvatars,
   }) {
     return AllnimallAvatarGroup(
-      children: children,
       spacing: spacing,
       maxAvatars: maxAvatars,
       alignment: Alignment.bottomCenter,
+      children: children,
     );
   }
 }

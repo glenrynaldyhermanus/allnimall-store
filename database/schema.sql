@@ -330,6 +330,7 @@ CREATE TABLE public.products_categories (
     store_id UUID NOT NULL,
     pet_category_id UUID,
     parent_category_id UUID, -- for nested categories
+    type TEXT DEFAULT 'item', -- 'item' atau 'service'
     FOREIGN KEY (pet_category_id) REFERENCES public.pet_categories(id),
     FOREIGN KEY (store_id) REFERENCES public.stores(id),
     FOREIGN KEY (parent_category_id) REFERENCES public.products_categories(id)
@@ -370,6 +371,10 @@ CREATE TABLE public.products (
     is_prescription_required BOOLEAN DEFAULT false,
     shelf_life_days INTEGER,
     storage_instructions TEXT,
+    -- Service fields
+    product_type TEXT DEFAULT 'item', -- 'item' atau 'service'
+    duration_minutes INTEGER, -- untuk jasa yang berdurasi
+    service_category TEXT, -- kategori jasa (grooming, veterinary, dll)
     FOREIGN KEY (category_id) REFERENCES public.products_categories(id),
     FOREIGN KEY (store_id) REFERENCES public.stores(id)
 );
@@ -637,6 +642,9 @@ CREATE INDEX idx_products_store_id ON public.products(store_id);
 CREATE INDEX idx_products_category_id ON public.products(category_id);
 CREATE INDEX idx_products_code ON public.products(code);
 CREATE INDEX idx_products_barcode ON public.products(barcode);
+CREATE INDEX idx_products_product_type ON public.products(product_type);
+CREATE INDEX idx_products_service_category ON public.products(service_category);
+CREATE INDEX idx_products_categories_type ON public.products_categories(type);
 
 -- Sales indexes
 CREATE INDEX idx_sales_store_id ON public.sales(store_id);
@@ -857,7 +865,7 @@ COMMENT ON TABLE public.merchant_customers IS 'Mapping table between merchants a
 COMMENT ON TABLE public.pets IS 'Pet information registered in the system for tracking health and services. Linked to customers, accessible across all merchants when customer logs in';
 COMMENT ON TABLE public.pet_healths IS 'Detailed health records for each pet including vaccination, medication, and vet visit history';
 COMMENT ON TABLE public.pet_schedules IS 'Scheduling system for pet appointments, grooming, medication reminders, etc.';
-COMMENT ON TABLE public.products IS 'Pet products with specific fields for pet shop needs like expiry dates, pet size recommendations';
+COMMENT ON TABLE public.products IS 'Pet products and services with specific fields for pet shop needs. Supports both physical products (items) and services (grooming, veterinary, etc.)';
 COMMENT ON TABLE public.sales IS 'Sales transactions with pet-specific fields for service type and pet association';
 
 -- ========================================
@@ -875,5 +883,271 @@ COMMENT ON TABLE public.sales IS 'Sales transactions with pet-specific fields fo
 -- 8. Performance optimized with proper indexes
 -- 9. Helper functions for customer-merchant relationships
 -- 10. Sample data for quick development start
+
+-- ========================================
+-- SAMPLE SERVICE DATA
+-- ========================================
+
+-- Insert sample service products
+INSERT INTO public.products (
+    name,
+    price,
+    purchase_price,
+    stock,
+    product_type,
+    service_category,
+    duration_minutes,
+    description,
+    store_id
+) 
+SELECT 
+    'Grooming Anjing Kecil',
+    150000,
+    0,
+    0,
+    'service',
+    'grooming',
+    120,
+    'Grooming lengkap untuk anjing kecil (bawah 10kg)',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products (
+    name,
+    price,
+    purchase_price,
+    stock,
+    product_type,
+    service_category,
+    duration_minutes,
+    description,
+    store_id
+) 
+SELECT 
+    'Grooming Anjing Besar',
+    200000,
+    0,
+    0,
+    'service',
+    'grooming',
+    180,
+    'Grooming lengkap untuk anjing besar (diatas 10kg)',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products (
+    name,
+    price,
+    purchase_price,
+    stock,
+    product_type,
+    service_category,
+    duration_minutes,
+    description,
+    store_id
+) 
+SELECT 
+    'Konsultasi Dokter Hewan',
+    100000,
+    0,
+    0,
+    'service',
+    'veterinary',
+    30,
+    'Konsultasi kesehatan hewan dengan dokter hewan',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products (
+    name,
+    price,
+    purchase_price,
+    stock,
+    product_type,
+    service_category,
+    duration_minutes,
+    description,
+    store_id
+) 
+SELECT 
+    'Vaksinasi Dasar',
+    250000,
+    0,
+    0,
+    'service',
+    'vaccination',
+    45,
+    'Vaksinasi dasar untuk anjing/kucing',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products (
+    name,
+    price,
+    purchase_price,
+    stock,
+    product_type,
+    service_category,
+    duration_minutes,
+    description,
+    store_id
+) 
+SELECT 
+    'Antar Jemput Pet',
+    50000,
+    0,
+    0,
+    'service',
+    'transportation',
+    60,
+    'Layanan antar jemput hewan peliharaan',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+-- ========================================
+-- SAMPLE CATEGORIES DATA
+-- ========================================
+
+-- Insert sample categories for items
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Makanan Anjing',
+    'item',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Makanan Kucing',
+    'item',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Obat-obatan',
+    'item',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Aksesoris',
+    'item',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Vitamin & Suplemen',
+    'item',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+-- Insert sample categories for services
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Grooming',
+    'service',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Kedokteran Hewan',
+    'service',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Pelatihan',
+    'service',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Penitipan',
+    'service',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.products_categories (
+    name,
+    type,
+    store_id
+) 
+SELECT 
+    'Transportasi',
+    'service',
+    s.id
+FROM public.stores s 
+WHERE s.name = 'Allnimall Pet Shop - Jakarta Selatan'
+ON CONFLICT DO NOTHING;
 
 -- Ready for implementation with Allnimall Unified Customer Architecture! 

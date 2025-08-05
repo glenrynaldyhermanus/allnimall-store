@@ -116,16 +116,15 @@ class ManagementRepositoryImpl implements ManagementRepository {
   @override
   Future<List<Map<String, dynamic>>> getCategories() async {
     try {
-      final businessData = await LocalStorageService.getBusinessData();
-      final businessId = businessData?['id'];
-      if (businessId == null) {
-        throw Exception('Business ID not found');
+      final storeId = await LocalStorageService.getStoreId();
+      if (storeId == null) {
+        throw Exception('Store ID not found');
       }
 
       final response = await _supabaseClient
-          .from('categories')
+          .from('products_categories')
           .select('*, products(count)')
-          .eq('business_id', businessId)
+          .eq('store_id', storeId)
           .order('name', ascending: true);
 
       return (response as List)
@@ -147,21 +146,55 @@ class ManagementRepositoryImpl implements ManagementRepository {
   }
 
   @override
-  Future<void> createCategory(Map<String, dynamic> categoryData) async {
+  Future<List<Map<String, dynamic>>> getServiceCategories() async {
     try {
-      final businessData = await LocalStorageService.getBusinessData();
-      final businessId = businessData?['id'];
-      if (businessId == null) {
-        throw Exception('Business ID not found');
+      final storeId = await LocalStorageService.getStoreId();
+      if (storeId == null) {
+        throw Exception('Store ID not found');
       }
 
-      // Add business_id to category data
-      final categoryDataWithBusiness = {
+      final response = await _supabaseClient
+          .from('products_categories')
+          .select('*, products(count)')
+          .eq('store_id', storeId)
+          .eq('type', 'service')
+          .order('name', ascending: true);
+
+      return (response as List)
+          .map((category) {
+            final products = category['products'] as List?;
+            final productCount = products?.length ?? 0;
+
+            return {
+              ...category,
+              'product_count': productCount,
+            };
+          })
+          .toList()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    } catch (e) {
+      throw Exception('Failed to fetch service categories');
+    }
+  }
+
+  @override
+  Future<void> createCategory(Map<String, dynamic> categoryData) async {
+    try {
+      final storeId = await LocalStorageService.getStoreId();
+      if (storeId == null) {
+        throw Exception('Store ID not found');
+      }
+
+      // Add store_id to category data
+      final categoryDataWithStore = {
         ...categoryData,
-        'business_id': businessId,
+        'store_id': storeId,
       };
 
-      await _supabaseClient.from('categories').insert(categoryDataWithBusiness);
+      await _supabaseClient
+          .from('products_categories')
+          .insert(categoryDataWithStore);
     } catch (e) {
       throw Exception('Failed to create category');
     }
@@ -172,7 +205,7 @@ class ManagementRepositoryImpl implements ManagementRepository {
       String id, Map<String, dynamic> categoryData) async {
     try {
       await _supabaseClient
-          .from('categories')
+          .from('products_categories')
           .update(categoryData)
           .eq('id', id);
     } catch (e) {
@@ -183,7 +216,7 @@ class ManagementRepositoryImpl implements ManagementRepository {
   @override
   Future<void> deleteCategory(String id) async {
     try {
-      await _supabaseClient.from('categories').delete().eq('id', id);
+      await _supabaseClient.from('products_categories').delete().eq('id', id);
     } catch (e) {
       throw Exception('Failed to delete category');
     }

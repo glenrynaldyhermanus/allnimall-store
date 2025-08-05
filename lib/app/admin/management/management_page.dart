@@ -3,6 +3,8 @@ import 'package:allnimall_store/src/widgets/navigation/appbar.dart';
 import 'package:allnimall_store/src/widgets/navigation/sidebar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'widgets/index.dart';
+import 'items/items_content.dart';
+import 'services/services_content.dart';
 import 'package:shadcn_flutter/shadcn_flutter.dart';
 
 class ManagementPage extends ConsumerStatefulWidget {
@@ -15,68 +17,74 @@ class ManagementPage extends ConsumerStatefulWidget {
 }
 
 class _ManagementPageState extends ConsumerState<ManagementPage> {
-  String _selectedMenu = 'products';
+  String _selectedMenu = 'items';
 
   final List<ManagementMenuItem> _menuItems = const [
     ManagementMenuItem(
-      id: 'products',
-      title: 'Produk',
-      icon: Icons.inventory_2_outlined,
-      description: 'Kelola daftar produk pet shop',
+      id: 'items',
+      title: 'Barang',
+      icon: LucideIcons.shoppingBasket,
+      description: 'Kelola barang pet shop, makanan, dan lainnya',
+    ),
+    ManagementMenuItem(
+      id: 'services',
+      title: 'Jasa',
+      icon: LucideIcons.showerHead,
+      description: 'Kelola jasa pet shop, grooming, dan lainnya',
     ),
     ManagementMenuItem(
       id: 'inventory',
       title: 'Inventory',
-      icon: Icons.warehouse_outlined,
+      icon: LucideIcons.warehouse,
       description: 'Kelola stok barang',
     ),
     ManagementMenuItem(
       id: 'categories',
       title: 'Kategori',
-      icon: Icons.category_outlined,
-      description: 'Kelola kategori produk',
+      icon: LucideIcons.archive,
+      description: 'Kelola kategori barang dan jasa',
     ),
     ManagementMenuItem(
       id: 'customers',
       title: 'Pelanggan',
-      icon: Icons.people_outline,
+      icon: LucideIcons.userRound,
       description: 'Kelola data pemilik hewan',
     ),
     ManagementMenuItem(
       id: 'pets',
       title: 'Hewan Peliharaan',
-      icon: Icons.pets,
+      icon: LucideIcons.pawPrint,
       description: 'Kelola data hewan peliharaan',
     ),
     ManagementMenuItem(
       id: 'suppliers',
       title: 'Supplier',
-      icon: Icons.local_shipping_outlined,
+      icon: LucideIcons.truck,
       description: 'Kelola data supplier',
     ),
     ManagementMenuItem(
       id: 'discounts',
       title: 'Diskon',
-      icon: Icons.local_offer_outlined,
+      icon: LucideIcons.tag,
       description: 'Kelola diskon dan promo',
     ),
     ManagementMenuItem(
       id: 'taxes',
       title: 'Pajak',
-      icon: Icons.receipt_long_outlined,
-      description: 'Pengaturan pajak',
+      icon: LucideIcons.scrollText,
+      description: 'Pengaturan pajak barang dan jasa',
     ),
     ManagementMenuItem(
       id: 'expenses',
       title: 'Biaya',
-      icon: Icons.money_off_outlined,
-      description: 'Kelola biaya operasional',
+      icon: LucideIcons.banknote,
+      description: 'Kelola biaya operasional toko',
     ),
     ManagementMenuItem(
       id: 'loyalty',
       title: 'Loyalty',
-      icon: Icons.card_giftcard_outlined,
-      description: 'Program loyalitas',
+      icon: LucideIcons.gift,
+      description: 'Program loyalitas pelanggan',
     ),
   ];
 
@@ -153,8 +161,10 @@ class _ManagementPageState extends ConsumerState<ManagementPage> {
 
   Widget _buildContentByMenu(ManagementMenuItem selectedItem) {
     switch (_selectedMenu) {
-      case 'products':
-        return const ProductsContent();
+      case 'items':
+        return const ItemsContent();
+      case 'services':
+        return const ServicesContent();
       case 'inventory':
         return const InventoryContent();
       case 'categories':

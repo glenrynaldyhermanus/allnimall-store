@@ -19,6 +19,7 @@ class AllnimallButton extends StatefulWidget {
   final EdgeInsetsGeometry? padding;
   final BorderRadius? borderRadius;
   final AllnimallButtonVariance variance;
+  final bool isSelected;
 
   const AllnimallButton({
     super.key,
@@ -30,6 +31,7 @@ class AllnimallButton extends StatefulWidget {
     this.padding,
     this.borderRadius,
     this.variance = AllnimallButtonVariance.primary,
+    this.isSelected = false,
   });
 
   // Convenience constructors
@@ -42,6 +44,7 @@ class AllnimallButton extends StatefulWidget {
     this.height = 48,
     this.padding,
     this.borderRadius,
+    this.isSelected = false,
   }) : variance = AllnimallButtonVariance.primary;
 
   const AllnimallButton.secondary({
@@ -53,6 +56,7 @@ class AllnimallButton extends StatefulWidget {
     this.height = 48,
     this.padding,
     this.borderRadius,
+    this.isSelected = false,
   }) : variance = AllnimallButtonVariance.secondary;
 
   const AllnimallButton.outline({
@@ -64,6 +68,7 @@ class AllnimallButton extends StatefulWidget {
     this.height = 48,
     this.padding,
     this.borderRadius,
+    this.isSelected = false,
   }) : variance = AllnimallButtonVariance.outline;
 
   const AllnimallButton.ghost({
@@ -75,6 +80,7 @@ class AllnimallButton extends StatefulWidget {
     this.height = 48,
     this.padding,
     this.borderRadius,
+    this.isSelected = false,
   }) : variance = AllnimallButtonVariance.ghost;
 
   const AllnimallButton.destructive({
@@ -86,6 +92,7 @@ class AllnimallButton extends StatefulWidget {
     this.height = 48,
     this.padding,
     this.borderRadius,
+    this.isSelected = false,
   }) : variance = AllnimallButtonVariance.destructive;
 
   @override
@@ -170,6 +177,21 @@ class _AllnimallButtonState extends State<AllnimallButton>
   }
 
   Color _getBackgroundColor() {
+    if (widget.isSelected) {
+      switch (widget.variance) {
+        case AllnimallButtonVariance.primary:
+          return AppColors.primary;
+        case AllnimallButtonVariance.secondary:
+          return AppColors.secondary;
+        case AllnimallButtonVariance.outline:
+          return AppColors.primary.withValues(alpha: 0.1);
+        case AllnimallButtonVariance.ghost:
+          return AppColors.primary.withValues(alpha: 0.1);
+        case AllnimallButtonVariance.destructive:
+          return AppColors.error;
+      }
+    }
+
     switch (widget.variance) {
       case AllnimallButtonVariance.primary:
         return AppColors.primary;
@@ -185,6 +207,21 @@ class _AllnimallButtonState extends State<AllnimallButton>
   }
 
   Border? _getBorder() {
+    if (widget.isSelected) {
+      switch (widget.variance) {
+        case AllnimallButtonVariance.primary:
+        case AllnimallButtonVariance.secondary:
+        case AllnimallButtonVariance.ghost:
+        case AllnimallButtonVariance.destructive:
+          return null;
+        case AllnimallButtonVariance.outline:
+          return Border.all(
+            color: AppColors.primary,
+            width: 2,
+          );
+      }
+    }
+
     switch (widget.variance) {
       case AllnimallButtonVariance.primary:
       case AllnimallButtonVariance.secondary:

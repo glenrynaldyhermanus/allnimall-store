@@ -10,16 +10,16 @@ import 'package:allnimall_store/src/widgets/ui/form/allnimall_dialog.dart';
 import 'package:allnimall_store/src/core/utils/number_formatter.dart';
 import 'package:allnimall_store/src/core/services/supabase_service.dart';
 import 'package:allnimall_store/src/data/objects/product.dart';
-import 'package:allnimall_store/app/admin/management/products/widgets/product_form_sheet.dart';
+import 'package:allnimall_store/app/admin/management/services/widgets/service_form_sheet.dart';
 
-class ProductsContent extends ConsumerStatefulWidget {
-  const ProductsContent({super.key});
+class ServicesContent extends ConsumerStatefulWidget {
+  const ServicesContent({super.key});
 
   @override
-  ConsumerState<ProductsContent> createState() => _ProductsContentState();
+  ConsumerState<ServicesContent> createState() => _ServicesContentState();
 }
 
-class _ProductsContentState extends ConsumerState<ProductsContent> {
+class _ServicesContentState extends ConsumerState<ServicesContent> {
   @override
   void initState() {
     super.initState();
@@ -28,26 +28,34 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
     });
   }
 
-  Future<void> _editProduct(Product product) async {
+  List<Product> get _filteredServices {
+    final state = ref.watch(managementProvider);
+    if (state is! ProductsLoaded) return [];
+
+    // Filter hanya untuk services (product_type = 'service')
+    return state.products.where((p) => p.isService).toList();
+  }
+
+  Future<void> _editService(Product service) async {
     openSheet(
       context: context,
-      builder: (context) => ProductFormSheet(product: product),
+      builder: (context) => ServiceFormSheet(service: service),
       position: OverlayPosition.right,
     );
   }
 
-  Future<void> _deleteProduct(Product product) async {
+  Future<void> _deleteService(Product service) async {
     await AllnimallDialog.show(
       context: context,
-      title: 'Hapus Produk',
+      title: 'Hapus Jasa',
       content:
-          'Apakah Anda yakin ingin menghapus produk "${product.name}"? Tindakan ini tidak dapat dibatalkan.',
+          'Apakah Anda yakin ingin menghapus jasa "${service.name}"? Tindakan ini tidak dapat dibatalkan.',
       confirmText: 'Hapus',
       cancelText: 'Batal',
       isDestructive: true,
       onConfirm: () async {
         try {
-          await SupabaseService.softDeleteProduct(product.id);
+          await SupabaseService.softDeleteProduct(service.id);
 
           // Reload products after deletion
           ref.read(managementProvider.notifier).loadProducts();
@@ -59,7 +67,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
               builder: (context, overlay) => SurfaceCard(
                 child: Basic(
                   title: const Text('Berhasil'),
-                  content: const Text('Produk berhasil dihapus'),
+                  content: const Text('Jasa berhasil dihapus'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
                     child: const Text('Tutup'),
@@ -77,7 +85,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
               builder: (context, overlay) => SurfaceCard(
                 child: Basic(
                   title: const Text('Error'),
-                  content: Text('Gagal menghapus produk: ${e.toString()}'),
+                  content: Text('Gagal menghapus jasa: ${e.toString()}'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
                     child: const Text('Tutup'),
@@ -106,7 +114,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
           children: [
             const Icon(Icons.error_outline, size: 64, color: AppColors.error),
             const SizedBox(height: 16),
-            const Text('Error loading products',
+            const Text('Error loading services',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(state.message,
@@ -133,10 +141,10 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
               padding: const EdgeInsets.all(24),
               child: Row(
                 children: [
-                  const Icon(Icons.inventory_2_outlined,
+                  const Icon(Icons.miscellaneous_services_outlined,
                       size: 24, color: AppColors.primary),
                   const SizedBox(width: 12),
-                  const Text('Kelola Produk',
+                  const Text('Kelola Jasa',
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
                   const Spacer(),
@@ -144,13 +152,13 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                     onPressed: () {
                       openSheet(
                         context: context,
-                        builder: (context) => const ProductFormSheet(),
+                        builder: (context) => const ServiceFormSheet(),
                         position: OverlayPosition.right,
                       );
                     },
                     child: const Padding(
                       padding: EdgeInsets.only(left: 12, right: 12),
-                      child: Text('Tambah Produk',
+                      child: Text('Tambah Jasa',
                           style: TextStyle(color: Colors.white, fontSize: 14)),
                     ),
                   ),
@@ -160,21 +168,21 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
 
             // Content section with fixed height
             Expanded(
-              child: state.products.isEmpty
+              child: _filteredServices.isEmpty
                   ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.inventory_2_outlined,
+                          Icon(Icons.miscellaneous_services_outlined,
                               size: 64, color: AppColors.secondaryText),
                           SizedBox(height: 16),
-                          Text('Belum ada produk',
+                          Text('Belum ada jasa',
                               style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.secondaryText)),
                           SizedBox(height: 8),
-                          Text('Tambahkan produk pertama Anda',
+                          Text('Tambahkan jasa pertama Anda',
                               style: TextStyle(
                                   fontSize: 14,
                                   color: AppColors.secondaryText)),
@@ -187,7 +195,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                       headers: [
                         const AllnimallTableCell(
                           isHeader: true,
-                          child: Text('Produk'),
+                          child: Text('Jasa'),
                         ).build(context),
                         const AllnimallTableCell(
                           isHeader: true,
@@ -199,15 +207,11 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                         ).build(context),
                         const AllnimallTableCell(
                           isHeader: true,
-                          child: Text('Stok'),
+                          child: Text('Durasi'),
                         ).build(context),
                         const AllnimallTableCell(
                           isHeader: true,
-                          child: Text('Harga Jual'),
-                        ).build(context),
-                        const AllnimallTableCell(
-                          isHeader: true,
-                          child: Text('Harga Beli'),
+                          child: Text('Harga'),
                         ).build(context),
                         const AllnimallTableCell(
                           isHeader: true,
@@ -222,13 +226,13 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                           child: Text(''),
                         ).build(context),
                       ],
-                      rows: state.products.map((product) {
+                      rows: _filteredServices.map((service) {
                         return TableRow(
                           cells: [
-                            // Product info
+                            // Service info
                             AllnimallTableCell(
                               expanded: false,
-                              width: 350, // Lebar tetap untuk kolom produk
+                              width: 350, // Lebar tetap untuk kolom jasa
                               padding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 12),
                               child: Row(
@@ -244,7 +248,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                                     ),
                                     child: Center(
                                       child: Text(
-                                        product.name
+                                        service.name
                                             .substring(0, 1)
                                             .toUpperCase(),
                                         style: const TextStyle(
@@ -258,7 +262,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
-                                      product.name,
+                                      service.name,
                                       style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w600,
@@ -277,7 +281,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                               padding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 12),
                               child: Text(
-                                product.code ?? '-',
+                                service.code ?? '-',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: AppColors.secondaryText,
@@ -290,56 +294,53 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                               width: 150,
                               padding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 12),
-                              child: Text(
-                                product.categoryName ?? '-',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.secondaryText,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: AppColors.primary,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  service.serviceCategoryLabel,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ).build(context),
-                            // Stock
+                            // Duration
                             AllnimallTableCell(
                               expanded: false,
                               width: 100,
                               padding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 12),
                               child: Text(
-                                NumberFormatter.formatStock(product.stock),
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  color: product.stock > 0
-                                      ? AppColors.primary
-                                      : AppColors.error,
-                                ),
-                              ),
-                            ).build(context),
-                            // Selling Price
-                            AllnimallTableCell(
-                              expanded: false,
-                              width: 140,
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 16, horizontal: 12),
-                              child: Text(
-                                NumberFormatter.formatCurrency(product.price),
+                                service.formattedDuration,
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.w500,
                                   color: AppColors.primary,
                                 ),
                               ),
                             ).build(context),
-                            // Purchase Price
+                            // Price
                             AllnimallTableCell(
                               expanded: false,
                               width: 140,
                               padding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 12),
                               child: Text(
-                                NumberFormatter.formatCurrency(
-                                    product.purchasePrice),
+                                NumberFormatter.formatCurrency(service.price),
                                 style: const TextStyle(
-                                  fontSize: 14,
-                                  color: AppColors.secondaryText,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ).build(context),
@@ -349,7 +350,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                               width: 100,
                               padding: const EdgeInsets.symmetric(
                                   vertical: 16, horizontal: 12),
-                              child: product.discountValue > 0
+                              child: service.discountValue > 0
                                   ? Container(
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 8, vertical: 4),
@@ -359,7 +360,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
-                                        '${product.discountValue.toStringAsFixed(0)}%',
+                                        '${service.discountValue.toStringAsFixed(0)}%',
                                         style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
@@ -384,17 +385,17 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: product.isActive
+                                  color: service.isActive
                                       ? AppColors.success.withValues(alpha: 0.1)
                                       : AppColors.error.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  product.isActive ? 'Aktif' : 'Nonaktif',
+                                  service.isActive ? 'Aktif' : 'Nonaktif',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
-                                    color: product.isActive
+                                    color: service.isActive
                                         ? AppColors.success
                                         : AppColors.error,
                                   ),
@@ -418,7 +419,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                                     child: AllnimallIconButton.ghost(
                                       size: 28,
                                       icon: const Icon(Icons.edit, size: 14),
-                                      onPressed: () => _editProduct(product),
+                                      onPressed: () => _editService(service),
                                     ),
                                   ),
                                   SizedBox(
@@ -427,7 +428,7 @@ class _ProductsContentState extends ConsumerState<ProductsContent> {
                                     child: AllnimallIconButton.ghost(
                                       size: 28,
                                       icon: const Icon(Icons.delete, size: 14),
-                                      onPressed: () => _deleteProduct(product),
+                                      onPressed: () => _deleteService(service),
                                     ),
                                   ),
                                 ],

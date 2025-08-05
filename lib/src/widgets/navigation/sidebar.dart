@@ -105,7 +105,7 @@ class _SidebarState extends State<Sidebar> {
           buildButton('POS', LucideIcons.layoutDashboard, '/pos'),
 
           // Management Data
-          buildButton('Management', LucideIcons.package, '/management'),
+          buildButton('Data', LucideIcons.package, '/management'),
 
           // Organisasi
           buildButton('Organisasi', LucideIcons.building2, '/organization'),

@@ -461,10 +461,9 @@ class SupabaseService {
       }
 
       final response = await client
-          .from('categories')
+          .from('products_categories')
           .select('*, products(count)')
           .eq('store_id', storeId)
-          .eq('is_active', true)
           .order('created_at', ascending: false);
 
       debugPrint('✅ [SupabaseService] Categories retrieved successfully');
@@ -477,7 +476,7 @@ class SupabaseService {
 
   // Create new category
   static Future<Map<String, dynamic>?> createCategory(
-      String name, String description) async {
+      String name, String description, String type) async {
     try {
       debugPrint('➕ [SupabaseService] Creating new category...');
 
@@ -491,6 +490,7 @@ class SupabaseService {
       final categoryData = {
         'name': name,
         'description': description,
+        'type': type,
         'store_id': storeId,
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
@@ -500,7 +500,7 @@ class SupabaseService {
 
       // Insert category to database
       final response = await client
-          .from('categories')
+          .from('products_categories')
           .insert(categoryData)
           .select()
           .single();
@@ -515,7 +515,7 @@ class SupabaseService {
 
   // Update category
   static Future<Map<String, dynamic>?> updateCategory(
-      String categoryId, String name, String description) async {
+      String categoryId, String name, String description, String type) async {
     try {
       debugPrint('✏️ [SupabaseService] Updating category: $categoryId');
 
@@ -523,6 +523,7 @@ class SupabaseService {
       final categoryData = {
         'name': name,
         'description': description,
+        'type': type,
         'updated_at': DateTime.now().toIso8601String(),
       };
 
@@ -530,7 +531,7 @@ class SupabaseService {
 
       // Update category in database
       final response = await client
-          .from('categories')
+          .from('products_categories')
           .update(categoryData)
           .eq('id', categoryId)
           .select()
@@ -558,7 +559,7 @@ class SupabaseService {
       }
 
       // Update category with soft delete data
-      await client.from('categories').update({
+      await client.from('products_categories').update({
         'deleted_at': DateTime.now().toIso8601String(),
         'deleted_by': userId,
         'updated_at': DateTime.now().toIso8601String(),

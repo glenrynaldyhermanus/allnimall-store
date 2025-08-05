@@ -1,6 +1,33 @@
 import 'package:flutter/foundation.dart';
 import 'package:allnimall_store/src/core/utils/number_formatter.dart';
 
+enum ServiceCategory {
+  grooming('Grooming'),
+  veterinary('Kedokteran Hewan'),
+  training('Pelatihan'),
+  boarding('Penitipan'),
+  petSitting('Penjagaan'),
+  transportation('Antar Jemput'),
+  consultation('Konsultasi'),
+  vaccination('Vaksinasi'),
+  deworming('Deworming'),
+  nailTrimming('Potong Kuku'),
+  earCleaning('Bersihkan Telinga'),
+  dentalCleaning('Bersihkan Gigi'),
+  other('Lainnya');
+
+  const ServiceCategory(this.label);
+  final String label;
+
+  static ServiceCategory? fromString(String? value) {
+    if (value == null) return null;
+    return ServiceCategory.values.firstWhere(
+      (category) => category.name == value,
+      orElse: () => ServiceCategory.other,
+    );
+  }
+}
+
 class Product {
   final String id;
   final String name;
@@ -31,6 +58,10 @@ class Product {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final String? categoryName;
+  // New fields for service support
+  final String productType;
+  final int? durationMinutes;
+  final String? serviceCategory;
 
   Product({
     required this.id,
@@ -62,6 +93,9 @@ class Product {
     required this.createdAt,
     this.updatedAt,
     this.categoryName,
+    this.productType = 'item',
+    this.durationMinutes,
+    this.serviceCategory,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -103,6 +137,9 @@ class Product {
         updatedAt: json['updated_at'] != null
             ? DateTime.parse(json['updated_at'])
             : null,
+        productType: json['product_type'] ?? 'item',
+        durationMinutes: json['duration_minutes'],
+        serviceCategory: json['service_category'],
       );
     } catch (e) {
       debugPrint('❌ Debug - Error in Product.fromJson: $e');
@@ -142,6 +179,9 @@ class Product {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
       'category_name': categoryName,
+      'product_type': productType,
+      'duration_minutes': durationMinutes,
+      'service_category': serviceCategory,
     };
   }
 
@@ -153,4 +193,37 @@ class Product {
   String get formattedWeight =>
       NumberFormatter.formatWeight(weightGrams.toDouble());
   String get formattedDiscount => NumberFormatter.formatDiscount(discountValue);
+
+  // Helper methods for service/product distinction
+  bool get isService => productType == 'service';
+  bool get isItem => productType == 'item';
+
+  String get formattedDuration {
+    if (durationMinutes == null) return '';
+    final hours = durationMinutes! ~/ 60;
+    final minutes = durationMinutes! % 60;
+    if (hours > 0) {
+      return '${hours}j ${minutes}m';
+    }
+    return '${minutes}m';
+  }
+
+  String get displayType {
+    switch (productType) {
+      case 'service':
+        return 'Jasa';
+      case 'item':
+      default:
+        return 'Produk';
+    }
+  }
+
+  ServiceCategory? get serviceCategoryEnum {
+    if (serviceCategory == null) return null;
+    return ServiceCategory.fromString(serviceCategory);
+  }
+
+  String get serviceCategoryLabel {
+    return serviceCategoryEnum?.label ?? serviceCategory ?? '';
+  }
 }

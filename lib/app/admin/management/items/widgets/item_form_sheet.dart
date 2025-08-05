@@ -8,16 +8,16 @@ import 'package:allnimall_store/src/core/services/supabase_service.dart';
 import 'package:allnimall_store/src/data/objects/product.dart';
 import 'dart:io';
 
-class ProductFormSheet extends StatefulWidget {
-  final Product? product; // null untuk create, not null untuk edit
+class ItemFormSheet extends StatefulWidget {
+  final Product? item; // null untuk create, not null untuk edit
 
-  const ProductFormSheet({super.key, this.product});
+  const ItemFormSheet({super.key, this.item});
 
   @override
-  State<ProductFormSheet> createState() => _ProductFormSheetState();
+  State<ItemFormSheet> createState() => _ItemFormSheetState();
 }
 
-class _ProductFormSheetState extends State<ProductFormSheet> {
+class _ItemFormSheetState extends State<ItemFormSheet> {
   // Controller untuk setiap field
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _codeController = TextEditingController();
@@ -30,8 +30,12 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _minStockController = TextEditingController();
+  final TextEditingController _maxStockController = TextEditingController();
+  final TextEditingController _shelfLifeController = TextEditingController();
 
   bool _isActive = true;
+  bool _isPrescriptionRequired = false;
   File? _selectedImage;
   String? _initialImageUrl;
   bool _isSubmitting = false;
@@ -39,20 +43,24 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
   @override
   void initState() {
     super.initState();
-    if (widget.product != null) {
+    if (widget.item != null) {
       // Edit mode - populate fields with existing data
-      _nameController.text = widget.product!.name;
-      _codeController.text = widget.product!.code ?? '';
-      _categoryController.text = widget.product!.categoryName ?? '';
-      _priceController.text = widget.product!.price.toString();
-      _purchasePriceController.text = widget.product!.purchasePrice.toString();
-      _stockController.text = widget.product!.stock.toString();
-      _unitController.text = widget.product!.unit ?? '';
-      _weightController.text = widget.product!.weightGrams.toString();
-      _discountController.text = widget.product!.discountValue.toString();
-      _descriptionController.text = widget.product!.description ?? '';
-      _isActive = widget.product!.isActive;
-      _initialImageUrl = widget.product!.imageUrl;
+      _nameController.text = widget.item!.name;
+      _codeController.text = widget.item!.code ?? '';
+      _categoryController.text = widget.item!.categoryName ?? '';
+      _priceController.text = widget.item!.price.toString();
+      _purchasePriceController.text = widget.item!.purchasePrice.toString();
+      _stockController.text = widget.item!.stock.toString();
+      _unitController.text = widget.item!.unit ?? '';
+      _weightController.text = widget.item!.weightGrams.toString();
+      _discountController.text = widget.item!.discountValue.toString();
+      _descriptionController.text = widget.item!.description ?? '';
+      _minStockController.text = widget.item!.minStock.toString();
+      _maxStockController.text = widget.item!.maxStock?.toString() ?? '';
+      _shelfLifeController.text = widget.item!.shelfLifeDays?.toString() ?? '';
+      _isActive = widget.item!.isActive;
+      _isPrescriptionRequired = widget.item!.isPrescriptionRequired;
+      _initialImageUrl = widget.item!.imageUrl;
     }
   }
 
@@ -68,6 +76,9 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
     _weightController.dispose();
     _discountController.dispose();
     _descriptionController.dispose();
+    _minStockController.dispose();
+    _maxStockController.dispose();
+    _shelfLifeController.dispose();
     super.dispose();
   }
 
@@ -114,12 +125,21 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
             ? null
             : _descriptionController.text.trim(),
         'is_active': _isActive,
+        'is_prescription_required': _isPrescriptionRequired,
         'picture_url': pictureUrl,
+        'product_type': 'item', // Always set to item for this form
+        'min_stock': int.tryParse(_minStockController.text) ?? 0,
+        'max_stock': _maxStockController.text.trim().isEmpty
+            ? null
+            : int.tryParse(_maxStockController.text),
+        'shelf_life_days': _shelfLifeController.text.trim().isEmpty
+            ? null
+            : int.tryParse(_shelfLifeController.text),
       };
 
-      if (widget.product != null) {
+      if (widget.item != null) {
         // Update existing product
-        await SupabaseService.updateProduct(widget.product!.id, productData);
+        await SupabaseService.updateProduct(widget.item!.id, productData);
       } else {
         // Create new product
         await SupabaseService.createProduct(productData);
@@ -135,7 +155,7 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
           builder: (context, overlay) => shadcn.SurfaceCard(
             child: shadcn.Basic(
               title: const Text('Berhasil'),
-              content: Text(widget.product != null
+              content: Text(widget.item != null
                   ? 'Produk berhasil diperbarui'
                   : 'Produk berhasil disimpan'),
               trailing: AllnimallButton.primary(
@@ -156,7 +176,7 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
             child: shadcn.Basic(
               title: const Text('Error'),
               content: Text(
-                  'Gagal ${widget.product != null ? 'memperbarui' : 'menyimpan'} produk: ${e.toString()}'),
+                  'Gagal ${widget.item != null ? 'memperbarui' : 'menyimpan'} produk: ${e.toString()}'),
               trailing: AllnimallButton.primary(
                 onPressed: () => overlay.close(),
                 child: const Text('Tutup'),
@@ -175,7 +195,7 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isEditMode = widget.product != null;
+    final isEditMode = widget.item != null;
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -314,12 +334,44 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
               ),
               const shadcn.Gap(16),
 
+              // Stok Minimum
+              shadcn.FormField(
+                key: const shadcn.TextFieldKey('minStock'),
+                label: const Text('Stok Minimum'),
+                child: AllnimallTextInput(
+                  placeholder: 'Masukkan stok minimum',
+                  controller: _minStockController,
+                  features: const [
+                    shadcn.InputFeature.leading(
+                      Icon(Icons.warning),
+                    ),
+                  ],
+                ),
+              ),
+              const shadcn.Gap(16),
+
+              // Stok Maksimum
+              shadcn.FormField(
+                key: const shadcn.TextFieldKey('maxStock'),
+                label: const Text('Stok Maksimum'),
+                child: AllnimallTextInput(
+                  placeholder: 'Masukkan stok maksimum (opsional)',
+                  controller: _maxStockController,
+                  features: const [
+                    shadcn.InputFeature.leading(
+                      Icon(Icons.storage),
+                    ),
+                  ],
+                ),
+              ),
+              const shadcn.Gap(16),
+
               // Satuan
               shadcn.FormField(
                 key: const shadcn.TextFieldKey('unit'),
                 label: const Text('Satuan'),
                 child: AllnimallTextInput(
-                  placeholder: 'Masukkan satuan (misal: pcs, box, kg)',
+                  placeholder: 'Contoh: pcs, kg, liter',
                   controller: _unitController,
                   features: const [
                     shadcn.InputFeature.leading(
@@ -335,23 +387,39 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
                 key: const shadcn.TextFieldKey('weight'),
                 label: const Text('Berat (gram)'),
                 child: AllnimallTextInput(
-                  placeholder: 'Masukkan berat produk dalam gram',
+                  placeholder: 'Masukkan berat dalam gram',
                   controller: _weightController,
                   features: const [
                     shadcn.InputFeature.leading(
-                      Icon(Icons.fitness_center),
+                      Icon(Icons.scale),
                     ),
                   ],
                 ),
               ),
               const shadcn.Gap(16),
 
-              // Diskon (%)
+              // Masa Simpan (hari)
+              shadcn.FormField(
+                key: const shadcn.TextFieldKey('shelfLife'),
+                label: const Text('Masa Simpan (hari)'),
+                child: AllnimallTextInput(
+                  placeholder: 'Masukkan masa simpan dalam hari',
+                  controller: _shelfLifeController,
+                  features: const [
+                    shadcn.InputFeature.leading(
+                      Icon(Icons.schedule),
+                    ),
+                  ],
+                ),
+              ),
+              const shadcn.Gap(16),
+
+              // Diskon
               shadcn.FormField(
                 key: const shadcn.TextFieldKey('discount'),
                 label: const Text('Diskon (%)'),
                 child: AllnimallTextInput(
-                  placeholder: 'Masukkan diskon (jika ada)',
+                  placeholder: 'Masukkan persentase diskon',
                   controller: _discountController,
                   features: const [
                     shadcn.InputFeature.leading(
@@ -362,21 +430,6 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
               ),
               const shadcn.Gap(16),
 
-              // Status Aktif
-              Row(
-                children: [
-                  shadcn.Checkbox(
-                    state: _isActive
-                        ? shadcn.CheckboxState.checked
-                        : shadcn.CheckboxState.unchecked,
-                    onChanged: (value) => setState(() =>
-                        _isActive = value == shadcn.CheckboxState.checked),
-                  ),
-                  const Text('Aktif (produk dapat dijual)'),
-                ],
-              ),
-              const shadcn.Gap(16),
-
               // Deskripsi
               shadcn.FormField(
                 key: const shadcn.TextFieldKey('description'),
@@ -384,25 +437,45 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
                 child: AllnimallTextArea(
                   placeholder: 'Masukkan deskripsi produk',
                   controller: _descriptionController,
-                  expandableHeight: true,
-                  initialHeight: 120,
+                ),
+              ),
+              const shadcn.Gap(16),
+
+              // Status
+              shadcn.FormField(
+                key: const shadcn.TextFieldKey('isActive'),
+                label: const Text('Status'),
+                child: shadcn.Switch(
+                  value: _isActive,
+                  onChanged: (value) {
+                    setState(() {
+                      _isActive = value;
+                    });
+                  },
+                ),
+              ),
+              const shadcn.Gap(16),
+
+              // Butuh Resep
+              shadcn.FormField(
+                key: const shadcn.TextFieldKey('isPrescriptionRequired'),
+                label: const Text('Butuh Resep'),
+                child: shadcn.Switch(
+                  value: _isPrescriptionRequired,
+                  onChanged: (value) {
+                    setState(() {
+                      _isPrescriptionRequired = value;
+                    });
+                  },
                 ),
               ),
               const shadcn.Gap(24),
 
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: shadcn.FormErrorBuilder(
-                  builder: (context, errors, child) {
-                    return AllnimallButton.primary(
-                      onPressed: errors.isEmpty && !_isSubmitting
-                          ? () => context.submitForm()
-                          : null,
-                      isLoading: _isSubmitting,
-                      child: Text(isEditMode ? 'Perbarui' : 'Simpan'),
-                    );
-                  },
-                ),
+              // Submit Button
+              AllnimallButton.primary(
+                onPressed: _isSubmitting ? null : _submit,
+                isLoading: _isSubmitting,
+                child: Text(isEditMode ? 'Update Produk' : 'Simpan Produk'),
               ),
             ],
           ),

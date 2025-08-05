@@ -10,6 +10,7 @@ abstract class ManagementRepository {
 
   // Categories
   Future<List<Map<String, dynamic>>> getCategories();
+  Future<List<Map<String, dynamic>>> getServiceCategories();
   Future<void> createCategory(Map<String, dynamic> categoryData);
   Future<void> updateCategory(String id, Map<String, dynamic> categoryData);
   Future<void> deleteCategory(String id);

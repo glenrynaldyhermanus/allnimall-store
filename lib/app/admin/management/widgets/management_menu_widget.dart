@@ -53,7 +53,7 @@ class _ManagementMenuWidgetState extends State<ManagementMenuWidget> {
           const Padding(
             padding: EdgeInsets.all(24),
             child: Text(
-              'Data Management',
+              'Pengelolaan Data',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
