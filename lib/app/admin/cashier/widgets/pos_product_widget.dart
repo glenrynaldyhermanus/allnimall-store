@@ -108,10 +108,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                   height: 32,
                   child: AllnimallButton.ghost(
                     onPressed: () => overlay.close(),
-                    child: const Text(
-                      'Tutup',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -222,10 +219,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                     height: 32,
                     child: AllnimallButton.ghost(
                       onPressed: () => overlay.close(),
-                      child: const Text(
-                        'Tutup',
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      label: 'Tutup',
                     ),
                   ),
                 ),
@@ -248,10 +242,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                   height: 32,
                   child: AllnimallButton.ghost(
                     onPressed: () => overlay.close(),
-                    child: const Text(
-                      'Tutup',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -300,10 +291,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                           height: 32,
                           child: AllnimallButton.ghost(
                             onPressed: () => overlay.close(),
-                            child: const Text(
-                              'Tutup',
-                              style: TextStyle(color: Colors.white),
-                            ),
+                            label: 'Tutup',
                           ),
                         ),
                       ),
@@ -326,10 +314,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                           height: 32,
                           child: AllnimallButton.ghost(
                             onPressed: () => overlay.close(),
-                            child: const Text(
-                              'Tutup',
-                              style: TextStyle(color: Colors.white),
-                            ),
+                            label: 'Tutup',
                           ),
                         ),
                       ),
@@ -423,10 +408,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                   height: 32,
                   child: AllnimallButton.ghost(
                     onPressed: () => overlay.close(),
-                    child: const Text(
-                      'Tutup',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -528,10 +510,7 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                             height: 36,
                             child: AllnimallButton.primary(
                               onPressed: _loadProductsData,
-                              child: const Text(
-                                'Muat Ulang',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                              label: 'Muat Ulang',
                             ),
                           ),
                         ],
@@ -648,13 +627,9 @@ class _PosProductWidgetState extends ConsumerState<PosProductWidget> {
                                               _addToCartWithAPI(product);
                                             }
                                           : null,
-                                      child: Text(
-                                        product.isService
-                                            ? 'Booking'
-                                            : 'Tambah',
-                                        style: const TextStyle(
-                                            color: Colors.white),
-                                      ),
+                                      label: product.isService
+                                          ? 'Booking'
+                                          : 'Tambah',
                                     ),
                                   ),
                                 ],

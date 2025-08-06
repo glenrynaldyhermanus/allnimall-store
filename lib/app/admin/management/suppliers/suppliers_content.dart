@@ -60,7 +60,7 @@ class _SuppliersContentState extends ConsumerState<SuppliersContent> {
                   content: const Text('Supplier berhasil dihapus'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -78,7 +78,7 @@ class _SuppliersContentState extends ConsumerState<SuppliersContent> {
                   content: Text('Gagal menghapus supplier: ${e.toString()}'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -114,7 +114,7 @@ class _SuppliersContentState extends ConsumerState<SuppliersContent> {
             AllnimallButton.primary(
               onPressed: () =>
                   ref.read(managementProvider.notifier).loadSuppliers(),
-              child: const Text('Coba Lagi'),
+              label: 'Coba Lagi',
             ),
           ],
         ),
@@ -146,11 +146,7 @@ class _SuppliersContentState extends ConsumerState<SuppliersContent> {
                         position: OverlayPosition.right,
                       );
                     },
-                    child: const Padding(
-                      padding: EdgeInsets.only(left: 12, right: 12),
-                      child: Text('Tambah Supplier',
-                          style: TextStyle(color: Colors.white, fontSize: 14)),
-                    ),
+                    label: 'Tambah Supplier',
                   ),
                 ],
               ),
@@ -315,7 +311,9 @@ class _SuppliersContentState extends ConsumerState<SuppliersContent> {
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
-                                  (supplier['is_active'] ?? true) ? 'Aktif' : 'Nonaktif',
+                                  (supplier['is_active'] ?? true)
+                                      ? 'Aktif'
+                                      : 'Nonaktif',
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -352,7 +350,8 @@ class _SuppliersContentState extends ConsumerState<SuppliersContent> {
                                     child: AllnimallIconButton.ghost(
                                       size: 28,
                                       icon: const Icon(Icons.delete, size: 14),
-                                      onPressed: () => _deleteSupplier(supplier),
+                                      onPressed: () =>
+                                          _deleteSupplier(supplier),
                                     ),
                                   ),
                                 ],

@@ -116,10 +116,7 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                   height: 32,
                   child: AllnimallButton.ghost(
                     onPressed: () => overlay.close(),
-                    child: const Text(
-                      'Tutup',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -154,10 +151,7 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                 height: 32,
                 child: AllnimallButton.ghost(
                   onPressed: () => overlay.close(),
-                  child: const Text(
-                    'Tutup',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  label: 'Tutup',
                 ),
               ),
             ),
@@ -190,10 +184,7 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                 height: 32,
                 child: AllnimallButton.ghost(
                   onPressed: () => overlay.close(),
-                  child: const Text(
-                    'Tutup',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  label: 'Tutup',
                 ),
               ),
             ),
@@ -405,10 +396,7 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                   height: 32,
                   child: AllnimallButton.ghost(
                     onPressed: () => overlay.close(),
-                    child: const Text(
-                      'Tutup',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -479,7 +467,7 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                         actions: [
                           AllnimallButton.primary(
                             onPressed: () => Navigator.pop(dialogContext),
-                            child: const Text('Tutup'),
+                            label: 'Tutup',
                           ),
                         ],
                       ),
@@ -498,7 +486,7 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                               height: 32,
                               child: AllnimallButton.ghost(
                                 onPressed: () => overlay.close(),
-                                child: const Text('Tutup'),
+                                label: 'Tutup',
                               ),
                             ),
                           ),
@@ -578,10 +566,7 @@ class _PosCartPanelState extends ConsumerState<PosCartPanel> {
                   height: 40,
                   child: AllnimallButton.primary(
                     onPressed: cartItems.isNotEmpty ? _handleCheckout : null,
-                    child: const Text(
-                      'Bayar',
-                      style: TextStyle(color: Colors.white),
-                    ),
+                    label: 'Bayar',
                   ),
                 ),
               ],

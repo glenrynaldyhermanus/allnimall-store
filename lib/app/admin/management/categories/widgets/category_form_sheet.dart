@@ -79,7 +79,7 @@ class _CategoryFormSheetState extends ConsumerState<CategoryFormSheet> {
               ),
               trailing: AllnimallButton.primary(
                 onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
+                label: 'Tutup',
               ),
             ),
           ),
@@ -102,7 +102,7 @@ class _CategoryFormSheetState extends ConsumerState<CategoryFormSheet> {
               content: Text('Gagal menyimpan kategori: ${e.toString()}'),
               trailing: AllnimallButton.primary(
                 onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
+                label: 'Tutup',
               ),
             ),
           ),
@@ -148,7 +148,7 @@ class _CategoryFormSheetState extends ConsumerState<CategoryFormSheet> {
                 const Spacer(),
                 AllnimallButton.ghost(
                   onPressed: () => closeSheet(context),
-                  child: const Icon(Icons.close),
+                  label: 'Tutup',
                 ),
               ],
             ),
@@ -218,22 +218,15 @@ class _CategoryFormSheetState extends ConsumerState<CategoryFormSheet> {
                 Expanded(
                   child: AllnimallButton.outline(
                     onPressed: () => closeSheet(context),
-                    child: const Text('Batal'),
+                    label: 'Batal',
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: AllnimallButton.primary(
                     onPressed: _isLoading ? null : _saveCategory,
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(),
-                          )
-                        : Text(
-                            widget.category != null ? 'Simpan' : 'Tambah',
-                          ),
+                    isLoading: _isLoading,
+                    label: widget.category != null ? 'Simpan' : 'Tambah',
                   ),
                 ),
               ],

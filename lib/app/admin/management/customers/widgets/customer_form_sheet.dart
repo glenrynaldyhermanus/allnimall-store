@@ -95,7 +95,7 @@ class _CustomerFormSheetState extends ConsumerState<CustomerFormSheet> {
                   : 'Pelanggan berhasil ditambahkan'),
               trailing: AllnimallButton.primary(
                 onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
+                label: 'Tutup',
               ),
             ),
           ),
@@ -113,7 +113,7 @@ class _CustomerFormSheetState extends ConsumerState<CustomerFormSheet> {
               content: Text('Gagal menyimpan pelanggan: ${e.toString()}'),
               trailing: AllnimallButton.primary(
                 onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
+                label: 'Tutup',
               ),
             ),
           ),
@@ -154,7 +154,7 @@ class _CustomerFormSheetState extends ConsumerState<CustomerFormSheet> {
               ),
               AllnimallButton.ghost(
                 onPressed: () => closeSheet(context),
-                child: const Icon(Icons.close),
+                label: 'Tutup',
               ),
             ],
           ),
@@ -252,7 +252,7 @@ class _CustomerFormSheetState extends ConsumerState<CustomerFormSheet> {
               Expanded(
                 child: AllnimallButton.outline(
                   onPressed: () => closeSheet(context),
-                  child: const Text('Batal'),
+                  label: 'Batal',
                 ),
               ),
               const SizedBox(width: 12),
@@ -260,7 +260,7 @@ class _CustomerFormSheetState extends ConsumerState<CustomerFormSheet> {
                 child: AllnimallButton.primary(
                   onPressed: _isLoading ? null : _saveCustomer,
                   isLoading: _isLoading,
-                  child: Text(widget.customer != null ? 'Simpan' : 'Tambah'),
+                  label: widget.customer != null ? 'Simpan' : 'Tambah',
                 ),
               ),
             ],

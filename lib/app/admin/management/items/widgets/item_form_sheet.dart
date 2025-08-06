@@ -160,7 +160,7 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                   : 'Produk berhasil disimpan'),
               trailing: AllnimallButton.primary(
                 onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
+                label: 'Tutup',
               ),
             ),
           ),
@@ -179,7 +179,7 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                   'Gagal ${widget.item != null ? 'memperbarui' : 'menyimpan'} produk: ${e.toString()}'),
               trailing: AllnimallButton.primary(
                 onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
+                label: 'Tutup',
               ),
             ),
           ),
@@ -218,7 +218,7 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
                   ),
                   AllnimallButton.ghost(
                     onPressed: () => shadcn.closeSheet(context),
-                    child: const Icon(Icons.close),
+                    label: 'Tutup',
                   ),
                 ],
               ),
@@ -475,7 +475,7 @@ class _ItemFormSheetState extends State<ItemFormSheet> {
               AllnimallButton.primary(
                 onPressed: _isSubmitting ? null : _submit,
                 isLoading: _isSubmitting,
-                child: Text(isEditMode ? 'Update Produk' : 'Simpan Produk'),
+                label: isEditMode ? 'Update Produk' : 'Simpan Produk',
               ),
             ],
           ),

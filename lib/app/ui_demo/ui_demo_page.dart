@@ -34,7 +34,7 @@ class UiDemoPage extends StatelessWidget {
             const Text('PRIMARY').h3(),
             AllnimallButton.primary(
               onPressed: () {},
-              child: const Text('Primary'),
+              label: 'Primary',
             ),
             const Gap(16),
 
@@ -42,7 +42,7 @@ class UiDemoPage extends StatelessWidget {
             const Text('SECONDARY').h3(),
             AllnimallButton.secondary(
               onPressed: () {},
-              child: const Text('Secondary'),
+              label: 'Secondary',
             ),
             const Gap(16),
 
@@ -50,7 +50,7 @@ class UiDemoPage extends StatelessWidget {
             const Text('OUTLINE').h3(),
             AllnimallButton.outline(
               onPressed: () {},
-              child: const Text('Outlined'),
+              label: 'Outlined',
             ),
             const Gap(16),
 
@@ -58,7 +58,7 @@ class UiDemoPage extends StatelessWidget {
             const Text('GHOST').h3(),
             AllnimallButton.ghost(
               onPressed: () {},
-              child: const Text('Ghost'),
+              label: 'Ghost',
             ),
             const Gap(16),
 
@@ -66,7 +66,7 @@ class UiDemoPage extends StatelessWidget {
             const Text('DESTRUCTIVE').h3(),
             AllnimallButton.destructive(
               onPressed: () {},
-              child: const Text('Destructive'),
+              label: 'Destructive',
             ),
             const Gap(16),
 
@@ -75,7 +75,7 @@ class UiDemoPage extends StatelessWidget {
             AllnimallButton.primary(
               onPressed: () {},
               isLoading: true,
-              child: const Text('Loading...'),
+              label: 'Loading...',
             ),
             const Gap(16),
 
@@ -86,19 +86,19 @@ class UiDemoPage extends StatelessWidget {
                 AllnimallButton.primary(
                   onPressed: () {},
                   height: 32,
-                  child: const Text('Small'),
+                  label: 'Small',
                 ),
                 const Gap(8),
                 AllnimallButton.primary(
                   onPressed: () {},
                   height: 48,
-                  child: const Text('Normal'),
+                  label: 'Normal',
                 ),
                 const Gap(8),
                 AllnimallButton.primary(
                   onPressed: () {},
                   height: 56,
-                  child: const Text('Large'),
+                  label: 'Large',
                 ),
               ],
             ),
@@ -108,14 +108,8 @@ class UiDemoPage extends StatelessWidget {
             const Text('WITH ICONS').h3(),
             AllnimallButton.primary(
               onPressed: () {},
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add, color: Colors.white, size: 16),
-                  Gap(8),
-                  Text('Add Item'),
-                ],
-              ),
+              label: 'Add Item',
+              leadingIcon: const Icon(Icons.add, color: Colors.white, size: 16),
             ),
             const Gap(48),
 

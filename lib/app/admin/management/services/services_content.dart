@@ -70,7 +70,7 @@ class _ServicesContentState extends ConsumerState<ServicesContent> {
                   content: const Text('Jasa berhasil dihapus'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -88,7 +88,7 @@ class _ServicesContentState extends ConsumerState<ServicesContent> {
                   content: Text('Gagal menghapus jasa: ${e.toString()}'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -124,7 +124,7 @@ class _ServicesContentState extends ConsumerState<ServicesContent> {
             AllnimallButton.primary(
               onPressed: () =>
                   ref.read(managementProvider.notifier).loadProducts(),
-              child: const Text('Coba Lagi'),
+              label: 'Coba Lagi',
             ),
           ],
         ),
@@ -156,11 +156,7 @@ class _ServicesContentState extends ConsumerState<ServicesContent> {
                         position: OverlayPosition.right,
                       );
                     },
-                    child: const Padding(
-                      padding: EdgeInsets.only(left: 12, right: 12),
-                      child: Text('Tambah Jasa',
-                          style: TextStyle(color: Colors.white, fontSize: 14)),
-                    ),
+                    label: 'Tambah Jasa',
                   ),
                 ],
               ),

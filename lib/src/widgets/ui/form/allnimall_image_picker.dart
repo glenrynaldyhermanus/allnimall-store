@@ -68,7 +68,7 @@ class _AllnimallImagePickerState extends State<AllnimallImagePicker> {
               content: Text('Gagal memilih gambar: ${e.toString()}'),
               trailing: AllnimallButton.primary(
                 onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
+                label: 'Tutup',
               ),
             ),
           ),
@@ -94,14 +94,14 @@ class _AllnimallImagePickerState extends State<AllnimallImagePicker> {
               Navigator.pop(context);
               _pickImage(ImageSource.gallery);
             },
-            child: const Text('Galeri'),
+            label: 'Galeri',
           ),
           AllnimallButton.primary(
             onPressed: () {
               Navigator.pop(context);
               _pickImage(ImageSource.camera);
             },
-            child: const Text('Kamera'),
+            label: 'Kamera',
           ),
         ],
       ),
@@ -146,11 +146,7 @@ class _AllnimallImagePickerState extends State<AllnimallImagePicker> {
                   right: 8,
                   child: AllnimallButton.ghost(
                     onPressed: _removeImage,
-                    child: const Icon(
-                      Icons.close,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                    label: 'Hapus',
                   ),
                 ),
                 // Loading Overlay

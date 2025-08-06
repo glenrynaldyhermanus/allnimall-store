@@ -33,7 +33,7 @@ class AllnimallDialog extends StatelessWidget {
             Navigator.of(context).pop();
             onCancel?.call();
           },
-          child: Text(cancelText ?? 'Batal'),
+          label: cancelText ?? 'Batal',
         ),
         isDestructive
             ? AllnimallButton.destructive(
@@ -41,14 +41,14 @@ class AllnimallDialog extends StatelessWidget {
                   Navigator.of(context).pop();
                   onConfirm?.call();
                 },
-                child: Text(confirmText ?? 'Konfirmasi'),
+                label: confirmText ?? 'Konfirmasi',
               )
             : AllnimallButton.primary(
                 onPressed: () {
                   Navigator.of(context).pop();
                   onConfirm?.call();
                 },
-                child: Text(confirmText ?? 'Konfirmasi'),
+                label: confirmText ?? 'Konfirmasi',
               ),
       ],
     );

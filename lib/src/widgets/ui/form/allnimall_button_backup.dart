@@ -12,7 +12,7 @@ enum AllnimallButtonVariance {
 
 class AllnimallButton extends StatefulWidget {
   final VoidCallback? onPressed;
-  final String label;
+  final Widget child;
   final bool isLoading;
   final double? width;
   final double? height;
@@ -20,14 +20,11 @@ class AllnimallButton extends StatefulWidget {
   final BorderRadius? borderRadius;
   final AllnimallButtonVariance variance;
   final bool isSelected;
-  final Widget? leadingIcon;
-  final Widget? trailingIcon;
-  final TextStyle? textStyle;
 
   const AllnimallButton({
     super.key,
     required this.onPressed,
-    required this.label,
+    required this.child,
     this.isLoading = false,
     this.width,
     this.height = 48,
@@ -35,85 +32,67 @@ class AllnimallButton extends StatefulWidget {
     this.borderRadius,
     this.variance = AllnimallButtonVariance.primary,
     this.isSelected = false,
-    this.leadingIcon,
-    this.trailingIcon,
-    this.textStyle,
   });
 
   // Convenience constructors
   const AllnimallButton.primary({
     super.key,
     required this.onPressed,
-    required this.label,
+    required this.child,
     this.isLoading = false,
     this.width,
     this.height = 48,
     this.padding,
     this.borderRadius,
     this.isSelected = false,
-    this.leadingIcon,
-    this.trailingIcon,
-    this.textStyle,
   }) : variance = AllnimallButtonVariance.primary;
 
   const AllnimallButton.secondary({
     super.key,
     required this.onPressed,
-    required this.label,
+    required this.child,
     this.isLoading = false,
     this.width,
     this.height = 48,
     this.padding,
     this.borderRadius,
     this.isSelected = false,
-    this.leadingIcon,
-    this.trailingIcon,
-    this.textStyle,
   }) : variance = AllnimallButtonVariance.secondary;
 
   const AllnimallButton.outline({
     super.key,
     required this.onPressed,
-    required this.label,
+    required this.child,
     this.isLoading = false,
     this.width,
     this.height = 48,
     this.padding,
     this.borderRadius,
     this.isSelected = false,
-    this.leadingIcon,
-    this.trailingIcon,
-    this.textStyle,
   }) : variance = AllnimallButtonVariance.outline;
 
   const AllnimallButton.ghost({
     super.key,
     required this.onPressed,
-    required this.label,
+    required this.child,
     this.isLoading = false,
     this.width,
     this.height = 48,
     this.padding,
     this.borderRadius,
     this.isSelected = false,
-    this.leadingIcon,
-    this.trailingIcon,
-    this.textStyle,
   }) : variance = AllnimallButtonVariance.ghost;
 
   const AllnimallButton.destructive({
     super.key,
     required this.onPressed,
-    required this.label,
+    required this.child,
     this.isLoading = false,
     this.width,
     this.height = 48,
     this.padding,
     this.borderRadius,
     this.isSelected = false,
-    this.leadingIcon,
-    this.trailingIcon,
-    this.textStyle,
   }) : variance = AllnimallButtonVariance.destructive;
 
   @override
@@ -272,66 +251,6 @@ class _AllnimallButtonState extends State<AllnimallButton>
     }
   }
 
-  Color _getTextColor() {
-    switch (widget.variance) {
-      case AllnimallButtonVariance.primary:
-        return Colors.white;
-      case AllnimallButtonVariance.secondary:
-        return AppColors.primaryText;
-      case AllnimallButtonVariance.outline:
-        return AppColors.primaryText;
-      case AllnimallButtonVariance.ghost:
-        return AppColors.primaryText;
-      case AllnimallButtonVariance.destructive:
-        return Colors.white;
-    }
-  }
-
-  Widget _buildContent() {
-    if (widget.isLoading) {
-      return const SizedBox(
-        width: 20,
-        height: 20,
-        child: CircularProgressIndicator(
-          onSurface: true,
-        ),
-      );
-    }
-
-    final List<Widget> children = [];
-
-    // Leading icon
-    if (widget.leadingIcon != null) {
-      children.add(widget.leadingIcon!);
-      children.add(const SizedBox(width: 8));
-    }
-
-    // Text
-    children.add(
-      Text(
-        widget.label,
-        style: widget.textStyle ??
-            TextStyle(
-              color: _getTextColor(),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-      ),
-    );
-
-    // Trailing icon
-    if (widget.trailingIcon != null) {
-      children.add(const SizedBox(width: 8));
-      children.add(widget.trailingIcon!);
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: children,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
@@ -348,8 +267,7 @@ class _AllnimallButtonState extends State<AllnimallButton>
               child: Container(
                 width: widget.width,
                 height: widget.height,
-                padding: widget.padding ??
-                    const EdgeInsets.symmetric(horizontal: 16),
+                padding: widget.padding,
                 decoration: BoxDecoration(
                   color: _getBackgroundColor(),
                   border: _getBorder(),
@@ -377,7 +295,15 @@ class _AllnimallButtonState extends State<AllnimallButton>
                   onTap: widget.onPressed != null ? _handleTap : null,
                   behavior: HitTestBehavior.opaque,
                   child: Center(
-                    child: _buildContent(),
+                    child: widget.isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              onSurface: true,
+                            ),
+                          )
+                        : widget.child,
                   ),
                 ),
               ),

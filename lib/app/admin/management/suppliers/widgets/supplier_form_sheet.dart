@@ -106,7 +106,7 @@ class _SupplierFormSheetState extends ConsumerState<SupplierFormSheet> {
                   : 'Supplier berhasil ditambahkan'),
               trailing: AllnimallButton.primary(
                 onPressed: () => overlay.close(),
-                child: const Text('Tutup'),
+                label: 'Tutup',
               ),
             ),
           ),
@@ -133,7 +133,7 @@ class _SupplierFormSheetState extends ConsumerState<SupplierFormSheet> {
           content: Text(message),
           trailing: AllnimallButton.primary(
             onPressed: () => overlay.close(),
-            child: const Text('Tutup'),
+            label: 'Tutup',
           ),
         ),
       ),
@@ -301,7 +301,7 @@ class _SupplierFormSheetState extends ConsumerState<SupplierFormSheet> {
               Expanded(
                 child: AllnimallButton.outline(
                   onPressed: () => shadcn.closeSheet(context),
-                  child: const Text('Batal'),
+                  label: 'Batal',
                 ),
               ),
               const SizedBox(width: 12),
@@ -309,7 +309,7 @@ class _SupplierFormSheetState extends ConsumerState<SupplierFormSheet> {
                 child: AllnimallButton.primary(
                   onPressed: _isLoading ? null : _saveSupplier,
                   isLoading: _isLoading,
-                  child: Text(widget.supplier != null ? 'Simpan' : 'Tambah'),
+                  label: widget.supplier != null ? 'Simpan' : 'Tambah',
                 ),
               ),
             ],

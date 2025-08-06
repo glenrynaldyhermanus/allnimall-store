@@ -70,7 +70,7 @@ class _ItemsContentState extends ConsumerState<ItemsContent> {
                   content: const Text('Produk berhasil dihapus'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -88,7 +88,7 @@ class _ItemsContentState extends ConsumerState<ItemsContent> {
                   content: Text('Gagal menghapus produk: ${e.toString()}'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -124,7 +124,7 @@ class _ItemsContentState extends ConsumerState<ItemsContent> {
             AllnimallButton.primary(
               onPressed: () =>
                   ref.read(managementProvider.notifier).loadProducts(),
-              child: const Text('Coba Lagi'),
+              label: 'Coba Lagi',
             ),
           ],
         ),
@@ -156,11 +156,7 @@ class _ItemsContentState extends ConsumerState<ItemsContent> {
                         position: OverlayPosition.right,
                       );
                     },
-                    child: const Padding(
-                      padding: EdgeInsets.only(left: 12, right: 12),
-                      child: Text('Tambah Produk',
-                          style: TextStyle(color: Colors.white, fontSize: 14)),
-                    ),
+                    label: 'Tambah Produk',
                   ),
                 ],
               ),

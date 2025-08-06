@@ -158,7 +158,7 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
                       : 'Jasa berhasil disimpan'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -182,7 +182,7 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
                       'Gagal ${widget.service != null ? 'memperbarui' : 'menyimpan'} jasa: ${e.toString()}'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -223,7 +223,7 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
                   ),
                   AllnimallButton.ghost(
                     onPressed: () => shadcn.closeSheet(context),
-                    child: const Icon(Icons.close),
+                    label: 'Tutup',
                   ),
                 ],
               ),
@@ -378,7 +378,7 @@ class _ServiceFormSheetState extends State<ServiceFormSheet> {
               AllnimallButton.primary(
                 onPressed: _isSubmitting ? null : _submit,
                 isLoading: _isSubmitting,
-                child: Text(isEditMode ? 'Update Jasa' : 'Simpan Jasa'),
+                label: isEditMode ? 'Update Jasa' : 'Simpan Jasa',
               ),
             ],
           ),

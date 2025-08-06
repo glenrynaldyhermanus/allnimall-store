@@ -77,7 +77,7 @@ class _CategoriesContentState extends ConsumerState<CategoriesContent> {
                   content: const Text('Kategori berhasil dihapus'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -95,7 +95,7 @@ class _CategoriesContentState extends ConsumerState<CategoriesContent> {
                   content: Text('Gagal menghapus kategori: ${e.toString()}'),
                   trailing: AllnimallButton.primary(
                     onPressed: () => overlay.close(),
-                    child: const Text('Tutup'),
+                    label: 'Tutup',
                   ),
                 ),
               ),
@@ -145,7 +145,7 @@ class _CategoriesContentState extends ConsumerState<CategoriesContent> {
             AllnimallButton.primary(
               onPressed: () =>
                   ref.read(managementProvider.notifier).loadCategories(),
-              child: const Text('Coba Lagi'),
+              label: 'Coba Lagi',
             ),
           ],
         ),
@@ -185,13 +185,7 @@ class _CategoriesContentState extends ConsumerState<CategoriesContent> {
                         position: OverlayPosition.right,
                       );
                     },
-                    child: const Padding(
-                      padding: EdgeInsets.only(left: 12, right: 12),
-                      child: Text(
-                        'Tambah Kategori',
-                        style: TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                    ),
+                    label: 'Tambah Kategori',
                   ),
                 ],
               ),

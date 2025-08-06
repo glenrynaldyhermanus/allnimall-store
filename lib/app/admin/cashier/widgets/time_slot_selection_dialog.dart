@@ -498,7 +498,7 @@ class _TimeSlotSelectionDialogState
                 Expanded(
                   child: AllnimallButton.ghost(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Batal'),
+                    label: 'Batal',
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -507,7 +507,7 @@ class _TimeSlotSelectionDialogState
                     onPressed: (selectedTime != null && selectedStaffId != null)
                         ? _confirmSelection
                         : null,
-                    child: const Text('Pilih Slot'),
+                    label: 'Pilih Slot',
                   ),
                 ),
               ],
